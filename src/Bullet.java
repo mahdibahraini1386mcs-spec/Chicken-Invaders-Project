@@ -24,4 +24,8 @@ public class Bullet {
     public int getY() {
         return y;
     }
+
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
 }

@@ -15,13 +15,24 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private final int spaceshipHeight = 30;
     private int spaceshipSpeed = 0;
     private List<Bullet> bullets;
+    private List<Chicken> chickens;
 
     public GamePanel() {
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
         bullets = new ArrayList<>();
+        chickens = new ArrayList<>();
+        initChickens();
         timer = new Timer(16, this);
+    }
+
+    private void initChickens() {
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 8; col++) {
+                chickens.add(new Chicken(100 + (col * 80), 50 + (row * 60)));
+            }
+        }
     }
 
     public void startGame() {
@@ -43,6 +54,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         for (Bullet bullet : bullets) {
             bullet.draw(g2d);
+        }
+
+        for (Chicken chicken : chickens) {
+            if (chicken.isAlive()) {
+                chicken.draw(g2d);
+            }
         }
     }
 
@@ -66,7 +83,25 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
+        checkCollisions();
+
         repaint();
+    }
+
+    private void checkCollisions() {
+        for (int i = 0; i < bullets.size(); i++) {
+            Bullet b = bullets.get(i);
+            Rectangle bulletBounds = b.getBounds();
+
+            for (Chicken c : chickens) {
+                if (c.isAlive() && bulletBounds.intersects(c.getBounds())) {
+                    c.setAlive(false);
+                    bullets.remove(i);
+                    i--;
+                    break;
+                }
+            }
+        }
     }
 
     @Override
