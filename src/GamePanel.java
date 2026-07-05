@@ -16,6 +16,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int spaceshipSpeed = 0;
     private List<Bullet> bullets;
     private List<Chicken> chickens;
+    private int score = 0;
 
     public GamePanel() {
         setBackground(Color.BLACK);
@@ -61,6 +62,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 chicken.draw(g2d);
             }
         }
+
+        g2d.setColor(Color.WHITE);
+        g2d.setFont(new Font("Arial", Font.BOLD, 20));
+        g2d.drawString("Score: " + score, 20, 30);
     }
 
     @Override
@@ -84,7 +89,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
 
         checkCollisions();
-
         repaint();
     }
 
@@ -98,6 +102,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     c.setAlive(false);
                     bullets.remove(i);
                     i--;
+                    score += 10;
                     break;
                 }
             }
