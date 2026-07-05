@@ -4,6 +4,9 @@ import java.awt.*;
 public class GameMain {
     public static void main(String[] args) {
 
+        DatabaseManager.initializeDatabase();
+
+
         SwingUtilities.invokeLater(() -> {
             createAndShowGUI();
         });
