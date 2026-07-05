@@ -21,7 +21,7 @@ public class GameMain {
 
         JPanel mainPanel = new JPanel(new CardLayout());
 
-        
+
         LoginPanel loginPanel = new LoginPanel();
         mainPanel.add(loginPanel, "LoginScreen");
 

@@ -1,10 +1,11 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DatabaseManager {
-
     private static final String URL = "jdbc:sqlite:game.db";
 
     public static void initializeDatabase() {
@@ -23,7 +24,6 @@ public class DatabaseManager {
                     ");";
             stmt.execute(createUsersTable);
 
-           
             String createHistoryTable = "CREATE TABLE IF NOT EXISTS game_history (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "username TEXT," +
@@ -38,6 +38,31 @@ public class DatabaseManager {
 
         } catch (SQLException e) {
             System.out.println("Database connection error: " + e.getMessage());
+        }
+    }
+
+    public static boolean registerUser(String username, String password) {
+        String sql = "INSERT INTO users(username, password) VALUES(?, ?)";
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            pstmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+    public static boolean loginUser(String username, String password) {
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        try (Connection conn = DriverManager.getConnection(URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            ResultSet rs = pstmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            return false;
         }
     }
 }
