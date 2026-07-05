@@ -18,10 +18,16 @@ public class GameMain {
         frame.setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new CardLayout());
+
+        
+        GamePanel gamePanel = new GamePanel();
         LoginPanel loginPanel = new LoginPanel();
-        MainMenuPanel mainMenuPanel = new MainMenuPanel();
+        MainMenuPanel mainMenuPanel = new MainMenuPanel(mainPanel, gamePanel);
+
+
         mainPanel.add(loginPanel, "LoginScreen");
         mainPanel.add(mainMenuPanel, "MainMenuScreen");
+        mainPanel.add(gamePanel, "GameScreen");
 
         frame.add(mainPanel);
         frame.setVisible(true);
