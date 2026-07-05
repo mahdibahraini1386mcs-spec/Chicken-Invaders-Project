@@ -3,7 +3,6 @@ import java.awt.*;
 
 public class GameMain {
     public static void main(String[] args) {
-
         DatabaseManager.initializeDatabase();
         SwingUtilities.invokeLater(() -> {
             createAndShowGUI();
@@ -18,12 +17,11 @@ public class GameMain {
         frame.setResizable(false);
         frame.setLocationRelativeTo(null);
 
-
         JPanel mainPanel = new JPanel(new CardLayout());
-
-
         LoginPanel loginPanel = new LoginPanel();
+        MainMenuPanel mainMenuPanel = new MainMenuPanel();
         mainPanel.add(loginPanel, "LoginScreen");
+        mainPanel.add(mainMenuPanel, "MainMenuScreen");
 
         frame.add(mainPanel);
         frame.setVisible(true);

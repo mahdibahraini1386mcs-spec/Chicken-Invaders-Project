@@ -49,7 +49,7 @@ public class LoginPanel extends JPanel {
                 } else {
                     if (DatabaseManager.registerUser(user, pass)) {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Registration Successful! You can now login.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                        userField.setText(""); // خالی کردن کادرها
+                        userField.setText("");
                         passField.setText("");
                     } else {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Username already exists!", "Error", JOptionPane.ERROR_MESSAGE);
@@ -57,7 +57,6 @@ public class LoginPanel extends JPanel {
                 }
             }
         });
-
 
         loginButton.addActionListener(new ActionListener() {
             @Override
@@ -70,6 +69,9 @@ public class LoginPanel extends JPanel {
                 } else {
                     if (DatabaseManager.loginUser(user, pass)) {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Login Successful! Welcome " + user, "Success", JOptionPane.INFORMATION_MESSAGE);
+                        CardLayout cl = (CardLayout) getParent().getLayout();
+                        cl.show(getParent(), "MainMenuScreen");
+
                     } else {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Invalid Username or Password!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
