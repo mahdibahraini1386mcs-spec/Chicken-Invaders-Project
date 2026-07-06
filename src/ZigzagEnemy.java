@@ -2,6 +2,7 @@ import java.awt.*;
 
 public class ZigzagEnemy extends Enemy {
     private Image image;
+    private double angle = 0; // برای کنترل نوسان
 
     public ZigzagEnemy(int x, int y, Image image) {
         super(x, y);
@@ -10,6 +11,9 @@ public class ZigzagEnemy extends Enemy {
 
     @Override
     public void move() {
+        x += 1;
+        angle += 0.1;
+        y += (int) (Math.sin(angle) * 3);
     }
 
     @Override

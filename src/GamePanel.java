@@ -20,7 +20,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean spacePressed = false;
 
     private int gridDirection = 1;
-    private final double GRID_SPEED_X = 1.2;
     private final int GRID_STEP_Y = 20;
     private long lastEggTime = 0;
     private Random random = new Random();
@@ -126,7 +125,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             egg.draw(g2d);
         }
 
-        // استفاده از کلاس HUD برای نمایش اطلاعات بازی
         GameHUD.draw(g2d, score, plane.getLives(), currentLevel);
     }
 
@@ -162,15 +160,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
 
+        // فراخوانی متد move برای هر دشمن (منطق پلی‌مورفیک)
+        for (Enemy enemy : enemies) {
+            enemy.move();
+        }
+
+        // منطق برخورد به لبه‌ها (فقط برای دشمنانی که حرکت افقی شبکه دارند)
         boolean hitEdge = false;
         for (Enemy enemy : enemies) {
-            if (enemy.getX() >= getWidth() - 40 && gridDirection == 1) {
-                hitEdge = true;
-                break;
-            }
-            if (enemy.getX() <= 0 && gridDirection == -1) {
-                hitEdge = true;
-                break;
+            if (!(enemy instanceof ZigzagEnemy)) {
+                if (enemy.getX() >= getWidth() - 40 || enemy.getX() <= 0) {
+                    hitEdge = true;
+                    break;
+                }
             }
         }
 
@@ -179,17 +181,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (Enemy enemy : enemies) {
                 enemy.setY(enemy.getY() + GRID_STEP_Y);
             }
-        } else {
-            for (Enemy enemy : enemies) {
-                enemy.setX(enemy.getX() + (int)(GRID_SPEED_X * gridDirection));
-            }
-        }
-
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastEggTime >= 3000) {
-            lastEggTime = currentTime;
-            Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
-            eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, null));
         }
     }
 
@@ -228,11 +219,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         String type = cell.getEnemyType();
                         Enemy newEnemy = null;
 
-                        if (type.equals("Normal")) {
-                            newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
-                        } else if (type.equals("Fast")) {
-                            newEnemy = new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage);
-                        }
+                        if (type.equals("Normal")) newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
+                        else if (type.equals("Fast")) newEnemy = new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage);
+                        else if (type.equals("Zigzag")) newEnemy = new ZigzagEnemy(cell.getX(), cell.getY(), zigzagEnemyImage);
 
                         if (newEnemy != null) {
                             newSpawns.add(newEnemy);
@@ -260,9 +249,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void checkLevelUp() {
         if (enemies.isEmpty()) {
             currentLevel++;
-            if (currentLevel == 2) {
-                initLevel2();
-            }
+            if (currentLevel == 2) initLevel2();
         }
     }
 
