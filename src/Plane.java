@@ -6,13 +6,15 @@ public class Plane {
     private int speed = 5;
     private int lives = 3;
     private int width = 50;
-    private int height = 30;
+    private int height = 50;
     private long lastShotTime = 0;
     private int firePower = 1;
+    private Image image;
 
-    public Plane(int startX, int startY) {
+    public Plane(int startX, int startY, Image image) {
         this.x = startX;
         this.y = startY;
+        this.image = image;
     }
 
     public void moveLeft() {
@@ -39,10 +41,14 @@ public class Plane {
     }
 
     public void draw(Graphics2D g2d) {
-        g2d.setColor(Color.GREEN);
-        int[] xPoints = {x, x + width / 2, x + width};
-        int[] yPoints = {y + height, y, y + height};
-        g2d.fillPolygon(xPoints, yPoints, 3);
+        if (image != null) {
+            g2d.drawImage(image, x, y, width, height, null);
+        } else {
+            g2d.setColor(Color.GREEN);
+            int[] xPoints = {x, x + width / 2, x + width};
+            int[] yPoints = {y + height, y, y + height};
+            g2d.fillPolygon(xPoints, yPoints, 3);
+        }
     }
 
     public int getX() { return x; }

@@ -28,13 +28,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int currentLevel = 1;
     private int score = 0;
 
+    private Image planeImage;
+    private Image normalEnemyImage;
+
     public GamePanel() {
         setFocusable(true);
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(800, 600));
         addKeyListener(this);
 
-        plane = new Plane(375, 500);
+        loadImages();
+
+        plane = new Plane(375, 500, planeImage);
         enemies = new ArrayList<>();
         bullets = new ArrayList<>();
         eggs = new ArrayList<>();
@@ -45,6 +50,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         timer = new Timer(16, this);
         timer.start();
+    }
+
+    private void loadImages() {
+        // دقت: نام فایل‌ها را با نام دقیق عکس‌های داخل سیستم خودت جایگزین کن
+        planeImage = ResourceManager.loadImage("airplan", "plane.png");
+        normalEnemyImage = ResourceManager.loadImage("chicken", "chicken.png");
     }
 
     private void initLevel1() {
@@ -60,7 +71,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 Cell cell = new Cell(row, col, x, y, 2, "Normal");
                 grid[row][col] = cell;
 
-                NormalEnemy enemy = new NormalEnemy(x, y, null);
+                NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
             }
@@ -182,7 +193,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     score += 10;
 
                     if (cell.getCounter() > 0) {
-                        NormalEnemy newEnemy = new NormalEnemy(cell.getX(), cell.getY(), null);
+                        NormalEnemy newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
                         newSpawns.add(newEnemy);
                         enemyCellMap.put(newEnemy, cell);
                     }
