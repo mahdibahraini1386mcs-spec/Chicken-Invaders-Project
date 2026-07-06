@@ -53,7 +53,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void loadImages() {
-        // دقت: نام فایل‌ها را با نام دقیق عکس‌های داخل سیستم خودت جایگزین کن
         planeImage = ResourceManager.loadImage("airplan", "plane.png");
         normalEnemyImage = ResourceManager.loadImage("chicken", "chicken.png");
     }
@@ -117,6 +116,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (rightPressed) plane.moveRight(getWidth());
         if (spacePressed && plane.canShoot()) {
             bullets.add(new Bullet(plane.getX() + plane.getWidth() / 2 - 2, plane.getY()));
+            SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
         }
     }
 
@@ -191,6 +191,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     enemyCellMap.remove(e);
                     bulletIter.remove();
                     score += 10;
+
+                    SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
 
                     if (cell.getCounter() > 0) {
                         NormalEnemy newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);

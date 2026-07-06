@@ -6,7 +6,7 @@ public class SoundManager {
 
     public static void playSound(String fileName) {
         try {
-            
+
             String path = "resources/sounds/sound-effects/" + fileName;
             File soundFile = new File(path);
 
