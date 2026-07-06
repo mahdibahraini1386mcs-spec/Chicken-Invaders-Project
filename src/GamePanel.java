@@ -30,6 +30,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private Image planeImage;
     private Image normalEnemyImage;
+    private Image fastEnemyImage;
+    private Image zigzagEnemyImage;
 
     public GamePanel() {
         setFocusable(true);
@@ -55,6 +57,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void loadImages() {
         planeImage = ResourceManager.loadImage("airplan", "plane.png");
         normalEnemyImage = ResourceManager.loadImage("chicken", "chicken.png");
+        fastEnemyImage = ResourceManager.loadImage("chicken", "fast_chicken.png");
+        zigzagEnemyImage = ResourceManager.loadImage("chicken", "zigzag_chicken.png");
     }
 
     private void initLevel1() {
@@ -73,6 +77,34 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
+            }
+        }
+    }
+
+    private void initLevel2() {
+        int startX = 80;
+        int startY = 50;
+        int hGap = 70;
+        int vGap = 50;
+
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 8; col++) {
+                int x = startX + col * hGap;
+                int y = startY + row * vGap;
+
+                if (row == 0) {
+                    Cell cell = new Cell(row, col, x, y, 1, "Fast");
+                    grid[row][col] = cell;
+                    FastEnemy enemy = new FastEnemy(x, y, fastEnemyImage);
+                    enemies.add(enemy);
+                    enemyCellMap.put(enemy, cell);
+                } else {
+                    Cell cell = new Cell(row, col, x, y, 2, "Normal");
+                    grid[row][col] = cell;
+                    NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
+                    enemies.add(enemy);
+                    enemyCellMap.put(enemy, cell);
+                }
             }
         }
     }
@@ -108,6 +140,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         updateEnemies();
         updateEggs();
         checkCollisions();
+        checkLevelUp();
         repaint();
     }
 
@@ -195,9 +228,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
 
                     if (cell.getCounter() > 0) {
-                        NormalEnemy newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
-                        newSpawns.add(newEnemy);
-                        enemyCellMap.put(newEnemy, cell);
+                        String type = cell.getEnemyType();
+                        Enemy newEnemy = null;
+
+                        if (type.equals("Normal")) {
+                            newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
+                        } else if (type.equals("Fast")) {
+                            newEnemy = new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage);
+                        }
+
+                        if (newEnemy != null) {
+                            newSpawns.add(newEnemy);
+                            enemyCellMap.put(newEnemy, cell);
+                        }
                     }
                     break;
                 }
@@ -214,6 +257,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 plane.loseLife();
                 eggIter.remove();
             }
+        }
+    }
+
+    private void checkLevelUp() {
+        if (enemies.isEmpty()) {
+            currentLevel++;
+            if (currentLevel == 2) {
+                initLevel2();
+            }
+            // ساختار برای اضافه شدن مراحل بعدی آماده است
         }
     }
 
