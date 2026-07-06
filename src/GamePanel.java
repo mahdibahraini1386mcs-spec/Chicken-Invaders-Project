@@ -126,11 +126,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             egg.draw(g2d);
         }
 
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        g2d.drawString("Level: " + currentLevel, 10, 20);
-        g2d.drawString("Lives: " + plane.getLives(), 10, 40);
-        g2d.drawString("Score: " + score, 10, 60);
+        // استفاده از کلاس HUD برای نمایش اطلاعات بازی
+        GameHUD.draw(g2d, score, plane.getLives(), currentLevel);
     }
 
     @Override
@@ -266,7 +263,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (currentLevel == 2) {
                 initLevel2();
             }
-            // ساختار برای اضافه شدن مراحل بعدی آماده است
         }
     }
 
