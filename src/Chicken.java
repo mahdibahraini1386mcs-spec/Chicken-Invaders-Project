@@ -6,10 +6,15 @@ public class Chicken {
     private final int width = 40;
     private final int height = 40;
     private boolean isAlive = true;
+    private int speed = 1;
 
     public Chicken(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    public void move() {
+        y += speed;
     }
 
     public void draw(Graphics2D g2d) {
@@ -26,6 +31,10 @@ public class Chicken {
     }
 
     public void setAlive(boolean alive) {
-        isAlive = alive;
+        this.isAlive = alive;
+    }
+
+    public int getY() {
+        return y;
     }
 }

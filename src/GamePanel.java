@@ -17,6 +17,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private List<Bullet> bullets;
     private List<Chicken> chickens;
     private int score = 0;
+    private boolean gameOver = false;
 
     public GamePanel() {
         setBackground(Color.BLACK);
@@ -48,6 +49,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+        if (gameOver) {
+            g2d.setColor(Color.RED);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.drawString("GAME OVER", 250, 300);
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 20));
+            g2d.drawString("Final Score: " + score, 330, 350);
+            return;
+        }
+
         g2d.setColor(Color.GREEN);
         int[] xPoints = {spaceshipX, spaceshipX + spaceshipWidth / 2, spaceshipX + spaceshipWidth};
         int[] yPoints = {spaceshipY + spaceshipHeight, spaceshipY, spaceshipY + spaceshipHeight};
@@ -70,6 +81,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (gameOver) {
+            return;
+        }
+
         spaceshipX += spaceshipSpeed;
 
         if (spaceshipX < 0) {
@@ -86,6 +101,26 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 bullets.remove(i);
                 i--;
             }
+        }
+
+        boolean allDead = true;
+        for (Chicken c : chickens) {
+            if (c.isAlive()) {
+                allDead = false;
+                c.move();
+                if (c.getY() > 600) {
+                    gameOver = true;
+                }
+
+                Rectangle playerBounds = new Rectangle(spaceshipX, spaceshipY, spaceshipWidth, spaceshipHeight);
+                if (c.getBounds().intersects(playerBounds)) {
+                    gameOver = true;
+                }
+            }
+        }
+
+        if (allDead) {
+            initChickens();
         }
 
         checkCollisions();
