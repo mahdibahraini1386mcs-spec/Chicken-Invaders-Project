@@ -30,6 +30,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private int currentLevel = 1;
     private int score = 0;
+    private int highScore = 0;
 
     private Image planeImage;
     private Image normalEnemyImage;
@@ -44,6 +45,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
 
         loadImages();
+        highScore = ScoreManager.loadHighScore();
 
         plane = new Plane(375, 500, planeImage);
         enemies = new ArrayList<>();
@@ -179,7 +181,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             bb.draw(g2d);
         }
 
-        GameHUD.draw(g2d, score, plane.getLives(), currentLevel);
+        GameHUD.draw(g2d, score, highScore, plane.getLives(), currentLevel);
     }
 
     @Override
@@ -192,6 +194,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         updateBossBullets();
         checkCollisions();
         checkLevelUp();
+
+        if (score > highScore) {
+            highScore = score;
+            ScoreManager.saveHighScore(highScore);
+        }
+
         repaint();
     }
 
