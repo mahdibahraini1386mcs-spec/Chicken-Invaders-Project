@@ -15,11 +15,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Cell[][] grid;
     private HashMap<Enemy, Cell> enemyCellMap;
 
+    private BossEnemy boss;
+    private ArrayList<BossBullet> bossBullets;
+
     private boolean leftPressed = false;
     private boolean rightPressed = false;
     private boolean spacePressed = false;
 
     private int gridDirection = 1;
+    private final double GRID_SPEED_X = 1.2;
     private final int GRID_STEP_Y = 20;
     private long lastEggTime = 0;
     private Random random = new Random();
@@ -31,6 +35,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Image normalEnemyImage;
     private Image fastEnemyImage;
     private Image zigzagEnemyImage;
+    private Image bossImage;
 
     public GamePanel() {
         setFocusable(true);
@@ -44,6 +49,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies = new ArrayList<>();
         bullets = new ArrayList<>();
         eggs = new ArrayList<>();
+        bossBullets = new ArrayList<>();
         enemyCellMap = new HashMap<>();
         grid = new Cell[5][8];
 
@@ -58,6 +64,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         normalEnemyImage = ResourceManager.loadImage("chicken", "chicken.png");
         fastEnemyImage = ResourceManager.loadImage("chicken", "fast_chicken.png");
         zigzagEnemyImage = ResourceManager.loadImage("chicken", "zigzag_chicken.png");
+        bossImage = ResourceManager.loadImage("chicken", "boss.png");
     }
 
     private void initLevel1() {
@@ -108,6 +115,46 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    private void initLevel3() {
+        int startX = 80;
+        int startY = 50;
+        int hGap = 70;
+        int vGap = 50;
+
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 8; col++) {
+                int x = startX + col * hGap;
+                int y = startY + row * vGap;
+
+                if (row == 0) {
+                    Cell cell = new Cell(row, col, x, y, 1, "Zigzag");
+                    grid[row][col] = cell;
+                    ZigzagEnemy enemy = new ZigzagEnemy(x, y, zigzagEnemyImage);
+                    enemies.add(enemy);
+                    enemyCellMap.put(enemy, cell);
+                } else if (row == 1) {
+                    Cell cell = new Cell(row, col, x, y, 1, "Fast");
+                    grid[row][col] = cell;
+                    FastEnemy enemy = new FastEnemy(x, y, fastEnemyImage);
+                    enemies.add(enemy);
+                    enemyCellMap.put(enemy, cell);
+                } else {
+                    Cell cell = new Cell(row, col, x, y, 2, "Normal");
+                    grid[row][col] = cell;
+                    NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
+                    enemies.add(enemy);
+                    enemyCellMap.put(enemy, cell);
+                }
+            }
+        }
+    }
+
+    private void initLevel4() {
+        enemies.clear();
+        eggs.clear();
+        boss = new BossEnemy(325, 50, bossImage, 50);
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -125,6 +172,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             egg.draw(g2d);
         }
 
+        if (boss != null) {
+            boss.draw(g2d);
+        }
+        for (BossBullet bb : bossBullets) {
+            bb.draw(g2d);
+        }
+
         GameHUD.draw(g2d, score, plane.getLives(), currentLevel);
     }
 
@@ -134,6 +188,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         updateBullets();
         updateEnemies();
         updateEggs();
+        updateBoss();
+        updateBossBullets();
         checkCollisions();
         checkLevelUp();
         repaint();
@@ -160,16 +216,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
 
-        // فراخوانی متد move برای هر دشمن (منطق پلی‌مورفیک)
         for (Enemy enemy : enemies) {
             enemy.move();
         }
 
-        // منطق برخورد به لبه‌ها (فقط برای دشمنانی که حرکت افقی شبکه دارند)
         boolean hitEdge = false;
         for (Enemy enemy : enemies) {
             if (!(enemy instanceof ZigzagEnemy)) {
-                if (enemy.getX() >= getWidth() - 40 || enemy.getX() <= 0) {
+                if (enemy.getX() >= getWidth() - 40 && gridDirection == 1) {
+                    hitEdge = true;
+                    break;
+                }
+                if (enemy.getX() <= 0 && gridDirection == -1) {
                     hitEdge = true;
                     break;
                 }
@@ -181,6 +239,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (Enemy enemy : enemies) {
                 enemy.setY(enemy.getY() + GRID_STEP_Y);
             }
+        } else {
+            for (Enemy enemy : enemies) {
+                if (!(enemy instanceof ZigzagEnemy)) {
+                    enemy.setX(enemy.getX() + (int)(GRID_SPEED_X * gridDirection));
+                }
+            }
+        }
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastEggTime >= 3000) {
+            lastEggTime = currentTime;
+            Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
+            eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, null));
         }
     }
 
@@ -193,6 +264,33 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    private void updateBoss() {
+        if (boss == null) return;
+
+        boss.move();
+
+        if (boss.canShoot()) {
+            int bx = boss.getX() + boss.getWidth() / 2;
+            int by = boss.getY() + boss.getHeight() - 20;
+
+            bossBullets.add(new BossBullet(bx, by, 0, 5, null));
+            bossBullets.add(new BossBullet(bx, by, -4, 4, null));
+            bossBullets.add(new BossBullet(bx, by, 4, 4, null));
+            bossBullets.add(new BossBullet(bx, by, 0, -5, null));
+        }
+    }
+
+    private void updateBossBullets() {
+        Iterator<BossBullet> iter = bossBullets.iterator();
+        while (iter.hasNext()) {
+            BossBullet b = iter.next();
+            b.move();
+            if (b.getY() > getHeight() || b.getY() < 0 || b.getX() < 0 || b.getX() > getWidth()) {
+                iter.remove();
+            }
+        }
+    }
+
     private void checkCollisions() {
         Iterator<Bullet> bulletIter = bullets.iterator();
         ArrayList<Enemy> newSpawns = new ArrayList<>();
@@ -200,35 +298,49 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         while (bulletIter.hasNext()) {
             Bullet b = bulletIter.next();
             Rectangle bBounds = b.getBounds();
+            boolean bulletRemoved = false;
 
-            Iterator<Enemy> enemyIter = enemies.iterator();
-            while (enemyIter.hasNext()) {
-                Enemy e = enemyIter.next();
-                if (bBounds.intersects(e.getBounds())) {
-                    Cell cell = enemyCellMap.get(e);
-                    cell.decreaseCounter();
-
-                    enemyIter.remove();
-                    enemyCellMap.remove(e);
+            if (boss != null) {
+                Rectangle bossBounds = new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight());
+                if (bBounds.intersects(bossBounds)) {
+                    boss.takeDamage(5);
                     bulletIter.remove();
-                    score += 10;
-
+                    bulletRemoved = true;
+                    score += 20;
                     SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
+                }
+            }
 
-                    if (cell.getCounter() > 0) {
-                        String type = cell.getEnemyType();
-                        Enemy newEnemy = null;
+            if (!bulletRemoved) {
+                Iterator<Enemy> enemyIter = enemies.iterator();
+                while (enemyIter.hasNext()) {
+                    Enemy e = enemyIter.next();
+                    if (bBounds.intersects(e.getBounds())) {
+                        Cell cell = enemyCellMap.get(e);
+                        cell.decreaseCounter();
 
-                        if (type.equals("Normal")) newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
-                        else if (type.equals("Fast")) newEnemy = new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage);
-                        else if (type.equals("Zigzag")) newEnemy = new ZigzagEnemy(cell.getX(), cell.getY(), zigzagEnemyImage);
+                        enemyIter.remove();
+                        enemyCellMap.remove(e);
+                        bulletIter.remove();
+                        score += 10;
 
-                        if (newEnemy != null) {
-                            newSpawns.add(newEnemy);
-                            enemyCellMap.put(newEnemy, cell);
+                        SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
+
+                        if (cell.getCounter() > 0) {
+                            String type = cell.getEnemyType();
+                            Enemy newEnemy = null;
+
+                            if (type.equals("Normal")) newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
+                            else if (type.equals("Fast")) newEnemy = new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage);
+                            else if (type.equals("Zigzag")) newEnemy = new ZigzagEnemy(cell.getX(), cell.getY(), zigzagEnemyImage);
+
+                            if (newEnemy != null) {
+                                newSpawns.add(newEnemy);
+                                enemyCellMap.put(newEnemy, cell);
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -236,6 +348,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies.addAll(newSpawns);
 
         Rectangle pBounds = new Rectangle(plane.getX(), plane.getY(), plane.getWidth(), plane.getHeight());
+
         Iterator<Egg> eggIter = eggs.iterator();
         while (eggIter.hasNext()) {
             Egg egg = eggIter.next();
@@ -244,12 +357,33 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 eggIter.remove();
             }
         }
+
+        Iterator<BossBullet> bbIter = bossBullets.iterator();
+        while (bbIter.hasNext()) {
+            BossBullet bb = bbIter.next();
+            if (bb.getBounds().intersects(pBounds)) {
+                plane.loseLife();
+                bbIter.remove();
+            }
+        }
+
+        if (boss != null) {
+            Rectangle bossBounds = new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight());
+            if (bossBounds.intersects(pBounds)) {
+                plane.loseLife();
+            }
+        }
     }
 
     private void checkLevelUp() {
-        if (enemies.isEmpty()) {
+        if (enemies.isEmpty() && boss == null) {
             currentLevel++;
             if (currentLevel == 2) initLevel2();
+            else if (currentLevel == 3) initLevel3();
+            else if (currentLevel == 4) initLevel4();
+        } else if (boss != null && boss.getHealth() <= 0) {
+            boss = null;
+            currentLevel++;
         }
     }
 
