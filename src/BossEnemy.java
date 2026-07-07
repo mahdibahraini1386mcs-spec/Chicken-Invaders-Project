@@ -1,61 +1,95 @@
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Image;
 
-public class BossEnemy extends Enemy {
-    private Image image;
+public class BossEnemy {
+    private int x;
+    private int y;
+    private int width;
+    private int height;
+    private int speedX;
+    private int speedY;
     private int health;
-    private int maxHealth;
-    private long lastShootTime;
-    private int moveDirection = 1;
-    private int speed = 2;
+    private Image image;
 
-    public BossEnemy(int x, int y, Image image, int maxHealth) {
-        super(x, y);
+    private long lastShotTime;
+    private long shotCooldown = 1500;
+
+    public BossEnemy(int x, int y, int width, int height, Image image) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
         this.image = image;
-        this.maxHealth = maxHealth;
-        this.health = maxHealth;
-        this.width = 150;
-        this.height = 150;
-        this.lastShootTime = System.currentTimeMillis();
+        this.speedX = 2;
+        this.speedY = 0;
+        this.health = 50;
+        this.lastShotTime = System.currentTimeMillis();
     }
 
-    @Override
-    public void move() {
-        x += speed * moveDirection;
-        if (x <= 0 || x >= 800 - width) {
-            moveDirection *= -1;
-        }
-    }
-
-    @Override
-    public void draw(Graphics2D g2d) {
+    public void draw(Graphics2D g) {
         if (image != null) {
-            g2d.drawImage(image, x, y, width, height, null);
-        } else {
-            g2d.setColor(Color.RED);
-            g2d.fillRect(x, y, width, height);
+            g.drawImage(image, x, y, width, height, null);
         }
+    }
 
-        g2d.setColor(Color.RED);
-        g2d.fillRect(x, y - 15, width, 8);
-        g2d.setColor(Color.GREEN);
-        int hpWidth = (int) (((double) health / maxHealth) * width);
-        g2d.fillRect(x, y - 15, hpWidth, 8);
+    public void move() {
+        x += speedX;
+        y += speedY;
+
+        if (x <= 0 || x + width >= 800) {
+            speedX = -speedX;
+        }
     }
 
     public boolean canShoot() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastShootTime >= 1500) {
-            lastShootTime = currentTime;
+        if (currentTime - lastShotTime >= shotCooldown) {
+            lastShotTime = currentTime;
             return true;
         }
         return false;
     }
 
-    public void takeDamage(int damage) {
-        health -= damage;
+    public void takeDamage(int amount) {
+        health -= amount;
+        if (health < 0) {
+            health = 0;
+        }
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public int getHeight() {
+        return height;
     }
 
     public int getHealth() {
         return health;
+    }
+
+    public void setHealth(int health) {
+        this.health = health;
+    }
+
+    public Image getImage() {
+        return image;
     }
 }

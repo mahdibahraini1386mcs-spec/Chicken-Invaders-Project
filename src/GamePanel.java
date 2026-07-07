@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -41,6 +43,19 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         setPreferredSize(new Dimension(800, 600));
         addKeyListener(this);
 
+        addAncestorListener(new AncestorListener() {
+            @Override
+            public void ancestorAdded(AncestorEvent event) {
+                requestFocusInWindow();
+            }
+
+            @Override
+            public void ancestorRemoved(AncestorEvent event) {}
+
+            @Override
+            public void ancestorMoved(AncestorEvent event) {}
+        });
+
         loadImages();
         ScoreManager.load();
 
@@ -72,7 +87,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         gameState = GameState.PLAYING;
     }
 
-    private void initLevel1() { /* کدهای چینش ثابت مانده */
+    private void initLevel1() {
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
@@ -86,7 +101,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    private void initLevel2() { /* کدهای چینش ثابت مانده */
+    private void initLevel2() {
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
@@ -108,7 +123,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
-    private void initLevel3() { /* کدهای چینش ثابت مانده */
+    private void initLevel3() {
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
@@ -138,7 +153,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void initLevel4() {
         enemies.clear(); eggs.clear();
-        boss = new BossEnemy(325, 50, bossImage, 50);
+        boss = new BossEnemy(325, 50, 150, 150, bossImage);
     }
 
     private void buyPlane(int type, int price) {
@@ -296,7 +311,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
             if (boss != null) {
                 if (bBounds.intersects(new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()))) {
-                    // محاسبه ضریب آسیب هواپیمای اسنایپر
                     boss.takeDamage(5 * plane.getDamageMultiplier());
                     bulletIter.remove();
                     bulletRemoved = true;
