@@ -64,11 +64,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void loadImages() {
-        planeImage = ResourceManager.loadImage("airplan", "plane.png");
-        normalEnemyImage = ResourceManager.loadImage("chicken", "chicken.png");
+        planeImage = ResourceManager.loadImage("airplan", "1.png");
+        normalEnemyImage = ResourceManager.loadImage("chicken", "normal_chicken.png");
         fastEnemyImage = ResourceManager.loadImage("chicken", "fast_chicken.png");
         zigzagEnemyImage = ResourceManager.loadImage("chicken", "zigzag_chicken.png");
-        bossImage = ResourceManager.loadImage("chicken", "boss.png");
+        bossImage = ResourceManager.loadImage("chicken", "boss1.png");
     }
 
     private void startGame() {
@@ -152,7 +152,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void initLevel4() {
-        enemies.clear(); eggs.clear();
+        enemies.clear();
+        eggs.clear();
         boss = new BossEnemy(325, 50, 150, 150, bossImage);
     }
 

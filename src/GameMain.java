@@ -22,7 +22,7 @@ public class GameMain {
         GamePanel gamePanel = new GamePanel();
         LoginPanel loginPanel = new LoginPanel();
 
-       
+
         mainPanel.add(loginPanel, "LoginScreen");
 
 
