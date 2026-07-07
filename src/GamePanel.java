@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
-    private enum GameState { MENU, STORE, PLAYING, GAMEOVER }
+    private enum GameState { MENU, STORE, PLAYING, GAMEOVER, WIN }
     private GameState gameState = GameState.MENU;
 
     private Timer timer;
@@ -27,15 +27,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean spacePressed = false;
 
     private int gridDirection = 1;
-    private final double GRID_SPEED_X = 1.2;
-    private final int GRID_STEP_Y = 20;
+    private double gridSpeedX = 1.2;
+    private int gridStepY = 20;
     private long lastEggTime = 0;
+    private int eggInterval = 3000;
     private Random random = new Random();
 
     private int currentLevel = 1;
     private int score = 0;
 
-    private Image planeImage, normalEnemyImage, fastEnemyImage, zigzagEnemyImage, bossImage;
+    private Image planeImage, normalEnemyImage, fastEnemyImage, zigzagEnemyImage, shooterEnemyImage, bossImage, boss2Image;
 
     public GamePanel() {
         setFocusable(true);
@@ -48,17 +49,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             public void ancestorAdded(AncestorEvent event) {
                 requestFocusInWindow();
             }
-
             @Override
             public void ancestorRemoved(AncestorEvent event) {}
-
             @Override
             public void ancestorMoved(AncestorEvent event) {}
         });
 
         loadImages();
         ScoreManager.load();
-
         timer = new Timer(16, this);
         timer.start();
     }
@@ -68,7 +66,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         normalEnemyImage = ResourceManager.loadImage("chicken", "normal_chicken.png");
         fastEnemyImage = ResourceManager.loadImage("chicken", "fast_chicken.png");
         zigzagEnemyImage = ResourceManager.loadImage("chicken", "zigzag_chicken.png");
+        shooterEnemyImage = ResourceManager.loadImage("chicken", "shooter_chicken.png");
         bossImage = ResourceManager.loadImage("chicken", "boss1.png");
+        boss2Image = ResourceManager.loadImage("chicken", "boss2.png");
     }
 
     private void startGame() {
@@ -82,12 +82,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemyCellMap = new HashMap<>();
         grid = new Cell[5][8];
         boss = null;
-
         initLevel1();
         gameState = GameState.PLAYING;
     }
 
     private void initLevel1() {
+        gridSpeedX = 1.2; gridStepY = 20; eggInterval = 3000;
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
@@ -102,59 +102,111 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void initLevel2() {
+        gridSpeedX = 1.5; gridStepY = 20; eggInterval = 2000;
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
-                if (row == 0) {
-                    Cell cell = new Cell(row, col, x, y, 1, "Fast");
-                    grid[row][col] = cell;
-                    FastEnemy enemy = new FastEnemy(x, y, fastEnemyImage);
-                    enemies.add(enemy);
-                    enemyCellMap.put(enemy, cell);
-                } else {
-                    Cell cell = new Cell(row, col, x, y, 2, "Normal");
-                    grid[row][col] = cell;
-                    NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
-                    enemies.add(enemy);
-                    enemyCellMap.put(enemy, cell);
-                }
+                String type = (row == 0) ? "Fast" : "Normal";
+                int counter = (row == 0) ? 1 : 2;
+                Image img = (row == 0) ? fastEnemyImage : normalEnemyImage;
+                Cell cell = new Cell(row, col, x, y, counter, type);
+                grid[row][col] = cell;
+                Enemy enemy = (row == 0) ? new FastEnemy(x, y, img) : new NormalEnemy(x, y, img);
+                enemies.add(enemy);
+                enemyCellMap.put(enemy, cell);
             }
         }
     }
 
     private void initLevel3() {
+        gridSpeedX = 2.0; gridStepY = 25; eggInterval = 1500;
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
-                if (row == 0) {
-                    Cell cell = new Cell(row, col, x, y, 1, "Zigzag");
-                    grid[row][col] = cell;
-                    ZigzagEnemy enemy = new ZigzagEnemy(x, y, zigzagEnemyImage);
-                    enemies.add(enemy);
-                    enemyCellMap.put(enemy, cell);
-                } else if (row == 1) {
-                    Cell cell = new Cell(row, col, x, y, 1, "Fast");
-                    grid[row][col] = cell;
-                    FastEnemy enemy = new FastEnemy(x, y, fastEnemyImage);
-                    enemies.add(enemy);
-                    enemyCellMap.put(enemy, cell);
-                } else {
-                    Cell cell = new Cell(row, col, x, y, 2, "Normal");
-                    grid[row][col] = cell;
-                    NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
-                    enemies.add(enemy);
-                    enemyCellMap.put(enemy, cell);
-                }
+                String type = (row == 0) ? "Zigzag" : ((row == 1) ? "Fast" : "Normal");
+                int counter = (row >= 2) ? 2 : 1;
+                Image img = (row == 0) ? zigzagEnemyImage : ((row == 1) ? fastEnemyImage : normalEnemyImage);
+                Cell cell = new Cell(row, col, x, y, counter, type);
+                grid[row][col] = cell;
+                Enemy enemy = (row == 0) ? new ZigzagEnemy(x, y, img) : ((row == 1) ? new FastEnemy(x, y, img) : new NormalEnemy(x, y, img));
+                enemies.add(enemy);
+                enemyCellMap.put(enemy, cell);
             }
         }
     }
 
     private void initLevel4() {
-        enemies.clear();
-        eggs.clear();
+        enemies.clear(); eggs.clear();
         boss = new BossEnemy(325, 50, 150, 150, bossImage);
+        boss.setHealth(50);
+    }
+
+    private void initLevel5() {
+        gridSpeedX = 2.5; gridStepY = 25; eggInterval = 1000;
+        int startX = 80, startY = 50, hGap = 70, vGap = 50;
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 8; col++) {
+                int x = startX + col * hGap, y = startY + row * vGap;
+                String type = (row < 2) ? "Shooter" : "Fast";
+                int counter = 3;
+                Image img = (row < 2) ? shooterEnemyImage : fastEnemyImage;
+                Cell cell = new Cell(row, col, x, y, counter, type);
+                grid[row][col] = cell;
+                Enemy enemy = (row < 2) ? new ShooterEnemy(x, y, img) : new FastEnemy(x, y, img);
+                enemies.add(enemy);
+                enemyCellMap.put(enemy, cell);
+            }
+        }
+    }
+
+    private void initLevel6() {
+        gridSpeedX = 3.0; gridStepY = 30; eggInterval = 800;
+        int startX = 80, startY = 50, hGap = 70, vGap = 50;
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 8; col++) {
+                int x = startX + col * hGap, y = startY + row * vGap;
+                String type = (row < 2) ? "Zigzag" : "Shooter";
+                int counter = 4;
+                Image img = (row < 2) ? zigzagEnemyImage : shooterEnemyImage;
+                Cell cell = new Cell(row, col, x, y, counter, type);
+                grid[row][col] = cell;
+                Enemy enemy = (row < 2) ? new ZigzagEnemy(x, y, img) : new ShooterEnemy(x, y, img);
+                enemies.add(enemy);
+                enemyCellMap.put(enemy, cell);
+            }
+        }
+    }
+
+    private void initLevel7() {
+        gridSpeedX = 3.5; gridStepY = 30; eggInterval = 700;
+        int startX = 80, startY = 50, hGap = 70, vGap = 50;
+        for (int row = 0; row < 5; row++) {
+            for (int col = 0; col < 8; col++) {
+                int x = startX + col * hGap, y = startY + row * vGap;
+                String type = "Normal";
+                Image img = normalEnemyImage;
+                if (row == 0) { type = "Zigzag"; img = zigzagEnemyImage; }
+                else if (row == 1) { type = "Shooter"; img = shooterEnemyImage; }
+                else if (row == 2) { type = "Fast"; img = fastEnemyImage; }
+                Cell cell = new Cell(row, col, x, y, 4, type);
+                grid[row][col] = cell;
+                Enemy enemy;
+                if (row == 0) enemy = new ZigzagEnemy(x, y, img);
+                else if (row == 1) enemy = new ShooterEnemy(x, y, img);
+                else if (row == 2) enemy = new FastEnemy(x, y, img);
+                else enemy = new NormalEnemy(x, y, img);
+                enemies.add(enemy);
+                enemyCellMap.put(enemy, cell);
+            }
+        }
+    }
+
+    private void initLevel8() {
+        enemies.clear(); eggs.clear();
+        boss = new BossEnemy(300, 50, 200, 200, boss2Image);
+        boss.setHealth(100);
     }
 
     private void buyPlane(int type, int price) {
@@ -202,6 +254,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setColor(Color.RED);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
             g2d.drawString("GAME OVER", 250, 300);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("Press ESC to return to Menu", 260, 400);
+        } else if (gameState == GameState.WIN) {
+            g2d.setColor(Color.GREEN);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.drawString("YOU WIN!", 280, 300);
             g2d.setFont(new Font("Arial", Font.PLAIN, 20));
             g2d.setColor(Color.WHITE);
             g2d.drawString("Press ESC to return to Menu", 260, 400);
@@ -258,17 +317,23 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         if (hitEdge) {
             gridDirection *= -1;
-            for (Enemy enemy : enemies) enemy.setY(enemy.getY() + GRID_STEP_Y);
+            for (Enemy enemy : enemies) enemy.setY(enemy.getY() + gridStepY);
         } else {
             for (Enemy enemy : enemies) {
-                if (!(enemy instanceof ZigzagEnemy)) enemy.setX(enemy.getX() + (int)(GRID_SPEED_X * gridDirection));
+                if (!(enemy instanceof ZigzagEnemy)) enemy.setX(enemy.getX() + (int)(gridSpeedX * gridDirection));
             }
         }
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastEggTime >= 3000) {
+        if (currentTime - lastEggTime >= eggInterval) {
             lastEggTime = currentTime;
             Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
             eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, null));
+            if (randomEnemy instanceof ShooterEnemy) {
+                int targetX = plane.getX() + plane.getWidth() / 2;
+                int targetY = plane.getY();
+                int dx = (targetX > randomEnemy.getX()) ? 3 : -3;
+                bossBullets.add(new BossBullet(randomEnemy.getX() + 20, randomEnemy.getY() + 40, dx, 5, null));
+            }
         }
     }
 
@@ -284,12 +349,24 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updateBoss() {
         if (boss == null) return;
         boss.move();
-        if (boss.canShoot()) {
+        long attackRate = (currentLevel == 8) ? 1000 : 1500;
+        if (boss.canShoot(attackRate)) {
             int bx = boss.getX() + boss.getWidth() / 2, by = boss.getY() + boss.getHeight() - 20;
-            bossBullets.add(new BossBullet(bx, by, 0, 5, null));
-            bossBullets.add(new BossBullet(bx, by, -4, 4, null));
-            bossBullets.add(new BossBullet(bx, by, 4, 4, null));
-            bossBullets.add(new BossBullet(bx, by, 0, -5, null));
+            if (currentLevel == 4) {
+                bossBullets.add(new BossBullet(bx, by, 0, 4, null));
+                bossBullets.add(new BossBullet(bx, by, -4, 0, null));
+                bossBullets.add(new BossBullet(bx, by, 4, 0, null));
+                bossBullets.add(new BossBullet(bx, by, 0, -4, null));
+            } else if (currentLevel == 8) {
+                bossBullets.add(new BossBullet(bx, by, 0, 5, null));
+                bossBullets.add(new BossBullet(bx, by, 5, 5, null));
+                bossBullets.add(new BossBullet(bx, by, 5, 0, null));
+                bossBullets.add(new BossBullet(bx, by, 5, -5, null));
+                bossBullets.add(new BossBullet(bx, by, 0, -5, null));
+                bossBullets.add(new BossBullet(bx, by, -5, -5, null));
+                bossBullets.add(new BossBullet(bx, by, -5, 0, null));
+                bossBullets.add(new BossBullet(bx, by, -5, 5, null));
+            }
         }
     }
 
@@ -312,10 +389,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
             if (boss != null) {
                 if (bBounds.intersects(new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()))) {
-                    boss.takeDamage(5 * plane.getDamageMultiplier());
+                    boss.takeDamage(1 * plane.getDamageMultiplier());
                     bulletIter.remove();
                     bulletRemoved = true;
-                    score += 20;
                     SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
                 }
             }
@@ -330,7 +406,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         enemyIter.remove();
                         enemyCellMap.remove(e);
                         bulletIter.remove();
-                        score += 10;
+                        if (e instanceof NormalEnemy) score += 10;
+                        else if (e instanceof FastEnemy) score += 15;
+                        else if (e instanceof ZigzagEnemy) score += 20;
+                        else if (e instanceof ShooterEnemy) score += 25;
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
 
                         if (cell.getCounter() > 0) {
@@ -339,6 +418,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                             if (type.equals("Normal")) newEnemy = new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage);
                             else if (type.equals("Fast")) newEnemy = new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage);
                             else if (type.equals("Zigzag")) newEnemy = new ZigzagEnemy(cell.getX(), cell.getY(), zigzagEnemyImage);
+                            else if (type.equals("Shooter")) newEnemy = new ShooterEnemy(cell.getX(), cell.getY(), shooterEnemyImage);
                             if (newEnemy != null) {
                                 newSpawns.add(newEnemy);
                                 enemyCellMap.put(newEnemy, cell);
@@ -352,7 +432,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies.addAll(newSpawns);
 
         Rectangle pBounds = new Rectangle(plane.getX(), plane.getY(), plane.getWidth(), plane.getHeight());
-
         Iterator<Egg> eggIter = eggs.iterator();
         while (eggIter.hasNext()) {
             Egg egg = eggIter.next();
@@ -361,7 +440,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 eggIter.remove();
             }
         }
-
         Iterator<BossBullet> bbIter = bossBullets.iterator();
         while (bbIter.hasNext()) {
             BossBullet bb = bbIter.next();
@@ -370,28 +448,39 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 bbIter.remove();
             }
         }
-
         if (boss != null && new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()).intersects(pBounds)) {
             plane.loseLife();
         }
     }
 
     private void checkLevelUp() {
-        if (enemies.isEmpty() && boss == null) {
+        if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
+            score += 200;
             currentLevel++;
             if (currentLevel == 2) initLevel2();
             else if (currentLevel == 3) initLevel3();
             else if (currentLevel == 4) initLevel4();
+            else if (currentLevel == 5) initLevel5();
+            else if (currentLevel == 6) initLevel6();
+            else if (currentLevel == 7) initLevel7();
+            else if (currentLevel == 8) initLevel8();
         } else if (boss != null && boss.getHealth() <= 0) {
+            score += (currentLevel == 4) ? 500 : 1000;
             boss = null;
-            currentLevel++;
+            if (currentLevel == 8) {
+                gameState = GameState.WIN;
+                ScoreManager.coins += score;
+                ScoreManager.save();
+            } else {
+                currentLevel++;
+                initLevel5();
+            }
         }
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-
         if (gameState == GameState.MENU) {
             if (key == KeyEvent.VK_ENTER) startGame();
             if (key == KeyEvent.VK_S) gameState = GameState.STORE;
@@ -405,7 +494,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = true;
             if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = true;
             if (key == KeyEvent.VK_SPACE) spacePressed = true;
-        } else if (gameState == GameState.GAMEOVER) {
+        } else if (gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
             if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
         }
     }
