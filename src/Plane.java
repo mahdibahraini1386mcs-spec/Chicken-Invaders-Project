@@ -1,58 +1,97 @@
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 public class Plane {
-    private int x, y, width = 50, height = 50;
+    private int x, y;
+    private int width = 50;
+    private int height = 50;
+    private Image image;
     private int speed = 5;
     private int lives = 3;
-    private int fireCount = 1;
-    private long lastShotTime = 0;
-    private long fireRate = 300;
-    private Image image;
+    private int fireLevel = 1;
+    private int damageMultiplier = 1;
+    private int planeType;
+    private long lastShootTime = 0;
+    private int shootDelay = 200;
 
-    public Plane(int x, int y, Image image, int type) {
+    public Plane(int x, int y, Image image, int planeType) {
         this.x = x;
         this.y = y;
         this.image = image;
-        if (type == 1) { speed = 7; fireRate = 250; }
-        else if (type == 2) { speed = 4; fireRate = 200; lives = 5; }
-        else if (type == 3) { speed = 5; fireRate = 150; }
+        this.planeType = planeType;
+
+        if (planeType == 2) {
+            this.damageMultiplier = 2;
+            this.speed = 7;
+        }
     }
 
-    public void moveLeft() { if (x > 0) x -= speed; }
-    public void moveRight(int panelWidth) { if (x < panelWidth - width) x += speed; }
+    public void moveLeft() {
+        x -= speed;
+        if (x < 0) x = 0;
+    }
+
+    public void moveRight(int screenWidth) {
+        x += speed;
+        if (x > screenWidth - width) x = screenWidth - width;
+    }
+
+    public void moveUp() {
+        y -= speed;
+        if (y < 0) y = 0;
+    }
+
+    public void moveDown(int screenHeight) {
+        y += speed;
+        if (y > screenHeight - height) y = screenHeight - height;
+    }
 
     public boolean canShoot() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - lastShotTime >= fireRate) {
-            lastShotTime = currentTime;
+        if (currentTime - lastShootTime >= shootDelay) {
+            lastShootTime = currentTime;
             return true;
         }
         return false;
     }
 
     public void shoot(ArrayList<Bullet> bullets) {
-        int startX = x + width / 2;
-        for (int i = 0; i < fireCount; i++) {
-            int offset = (i - (fireCount - 1) / 2) * 20;
-            bullets.add(new Bullet(startX + offset - 2, y));
+        if (fireLevel == 1) {
+            bullets.add(new Bullet(x + width / 2 - 2, y));
+        } else if (fireLevel == 2) {
+            bullets.add(new Bullet(x + 10, y));
+            bullets.add(new Bullet(x + width - 10, y));
+        } else {
+            bullets.add(new Bullet(x, y));
+            bullets.add(new Bullet(x + width / 2 - 2, y));
+            bullets.add(new Bullet(x + width, y));
+        }
+    }
+
+    public void draw(Graphics2D g2d) {
+        if (image != null) {
+            g2d.drawImage(image, x, y, width, height, null);
         }
     }
 
     public void addFire() {
-        if (fireCount < 5) fireCount++;
+        if (fireLevel < 3) {
+            fireLevel++;
+        }
     }
 
-    public void loseLife() { lives--; }
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
+
     public int getX() { return x; }
     public int getY() { return y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public int getLives() { return lives; }
-    public int getFireCount() { return fireCount; }
-    public int getDamageMultiplier() { return (ScoreManager.selectedPlane == 3) ? 2 : 1; }
-
-    public void draw(Graphics2D g2d) {
-        if (image != null) g2d.drawImage(image, x, y, width, height, null);
-    }
+    public int getDamageMultiplier() { return damageMultiplier; }
+    public void setLives(int lives) { this.lives = lives; }
+    public void takeDamage() { this.lives--; }
 }

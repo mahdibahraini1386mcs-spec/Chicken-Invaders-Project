@@ -1,6 +1,4 @@
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
-import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
@@ -9,8 +7,9 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
-    private enum GameState { MENU, PLAYING, GAMEOVER, WIN, HIGH_SCORES, SETTINGS, HOW_TO_PLAY }
+    private enum GameState { MENU, PLAYING, PAUSED, GAMEOVER, WIN, HIGH_SCORES, SETTINGS, HOW_TO_PLAY }
     private GameState gameState = GameState.MENU;
+    private GameState previousState = GameState.MENU;
 
     private String[] menuOptions = {"New Game", "High Scores", "Settings", "How to Play", "Exit"};
     private int currentMenuSelection = 0;
@@ -29,6 +28,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private boolean leftPressed = false;
     private boolean rightPressed = false;
+    private boolean upPressed = false;
+    private boolean downPressed = false;
     private boolean spacePressed = false;
 
     private int gridDirection = 1;
@@ -54,7 +55,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         ScoreManager.load();
         timer = new Timer(16, this);
         timer.start();
-        SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Main Theme.mp3");
+        SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Main Theme.wav");
     }
 
     private void loadImages() {
@@ -247,8 +248,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             g2d.drawString("HOW TO PLAY", 250, 150);
             g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-            g2d.drawString("Left/Right Arrows: Move", 280, 250);
+            g2d.drawString("W/A/S/D or Arrows: Move", 280, 250);
             g2d.drawString("Spacebar: Shoot", 280, 300);
+            g2d.drawString("P: Pause/Resume", 280, 350);
+            g2d.drawString("ESC: Back to Menu", 280, 400);
             g2d.drawString("Press ESC to return", 300, 500);
         } else if (gameState == GameState.PLAYING) {
             plane.draw(g2d);
@@ -260,6 +263,26 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
+        } else if (gameState == GameState.PAUSED) {
+            plane.draw(g2d);
+            for (Enemy enemy : enemies) enemy.draw(g2d);
+            for (Bullet bullet : bullets) bullet.draw(g2d);
+            for (Egg egg : eggs) egg.draw(g2d);
+            for (PowerUp pu : powerUps) pu.draw(g2d);
+            for (Explosion ex : explosions) ex.draw(g2d);
+            if (boss != null) boss.draw(g2d);
+            for (BossBullet bb : bossBullets) bb.draw(g2d);
+            GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
+
+            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.drawString("PAUSED", 300, 300);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+            g2d.drawString("Press P to Resume", 310, 350);
+            g2d.drawString("Press ESC for Main Menu", 280, 390);
         } else if (gameState == GameState.GAMEOVER) {
             g2d.setColor(Color.RED);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
@@ -296,6 +319,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updatePlane() {
         if (leftPressed) plane.moveLeft();
         if (rightPressed) plane.moveRight(getWidth());
+        if (upPressed) plane.moveUp();
+        if (downPressed) plane.moveDown(getHeight());
+
         if (spacePressed && plane.canShoot()) {
             plane.shoot(bullets);
             SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
@@ -463,21 +489,42 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             } else if (key == KeyEvent.VK_ENTER) {
                 if (currentMenuSelection == 0) startGame();
                 else if (currentMenuSelection == 1) gameState = GameState.HIGH_SCORES;
-                else if (currentMenuSelection == 2) gameState = GameState.SETTINGS;
+                else if (currentMenuSelection == 2) {
+                    previousState = GameState.MENU;
+                    gameState = GameState.SETTINGS;
+                }
                 else if (currentMenuSelection == 3) gameState = GameState.HOW_TO_PLAY;
                 else if (currentMenuSelection == 4) System.exit(0);
             }
-        } else if (gameState == GameState.HIGH_SCORES || gameState == GameState.HOW_TO_PLAY) {
-            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
-        } else if (gameState == GameState.SETTINGS) {
-            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
-            if (key == KeyEvent.VK_M) SoundManager.toggleMusic();
-            if (key == KeyEvent.VK_O) SoundManager.toggleSFX();
-        } else if (gameState == GameState.PLAYING) {
+        }
+        else if (gameState == GameState.PLAYING) {
             if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = true;
             if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = true;
+            if (key == KeyEvent.VK_UP || key == KeyEvent.VK_W) upPressed = true;
+            if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_S) downPressed = true;
             if (key == KeyEvent.VK_SPACE) spacePressed = true;
-        } else if (gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
+
+            if (key == KeyEvent.VK_P) gameState = GameState.PAUSED;
+            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
+            if (key == KeyEvent.VK_M) {
+                previousState = GameState.PLAYING;
+                gameState = GameState.SETTINGS;
+            }
+        }
+        else if (gameState == GameState.PAUSED) {
+            if (key == KeyEvent.VK_P) gameState = GameState.PLAYING;
+            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
+            if (key == KeyEvent.VK_M) {
+                previousState = GameState.PAUSED;
+                gameState = GameState.SETTINGS;
+            }
+        }
+        else if (gameState == GameState.SETTINGS) {
+            if (key == KeyEvent.VK_ESCAPE) gameState = previousState;
+            if (key == KeyEvent.VK_M) SoundManager.toggleMusic();
+            if (key == KeyEvent.VK_O) SoundManager.toggleSFX();
+        }
+        else if (gameState == GameState.HIGH_SCORES || gameState == GameState.HOW_TO_PLAY || gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
             if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
         }
     }
@@ -488,6 +535,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (gameState == GameState.PLAYING) {
             if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
             if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
+            if (key == KeyEvent.VK_UP || key == KeyEvent.VK_W) upPressed = false;
+            if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_S) downPressed = false;
             if (key == KeyEvent.VK_SPACE) spacePressed = false;
         }
     }
