@@ -10,7 +10,6 @@ public class NormalEnemy extends Enemy {
 
     @Override
     public void move() {
-        y += 1;
     }
 
     @Override

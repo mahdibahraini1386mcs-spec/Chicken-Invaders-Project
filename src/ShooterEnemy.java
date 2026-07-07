@@ -10,9 +10,6 @@ public class ShooterEnemy extends Enemy {
 
     @Override
     public void move() {
-        // منطق حرکت تیرانداز (مثلاً حرکت افقی یا ثابت)
-        // اگر می‌خواهی مثل دشمنان عادی حرکت کند:
-        // x += speedX;
     }
 
     @Override

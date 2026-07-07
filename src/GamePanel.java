@@ -358,7 +358,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
-        for (Enemy enemy : enemies) enemy.move();
+
+        for (Enemy enemy : enemies) {
+            enemy.move();
+            if (enemy.getY() > getHeight()) {
+                enemy.setY(-40);
+            }
+        }
+
         boolean hitEdge = false;
         for (Enemy enemy : enemies) {
             if (!(enemy instanceof ZigzagEnemy)) {
