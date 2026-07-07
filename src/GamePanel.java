@@ -51,6 +51,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         ScoreManager.load();
         timer = new Timer(16, this);
         timer.start();
+        SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Main Theme.mp3");
     }
 
     private void loadImages() {
@@ -102,9 +103,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
                 String type = (row == 0) ? "Fast" : "Normal";
-                Cell cell = new Cell(row, col, x, y, (row == 0 ? 1 : 2), type);
+                int counter = (row == 0) ? 1 : 2;
+                Image img = (row == 0) ? fastEnemyImage : normalEnemyImage;
+                Cell cell = new Cell(row, col, x, y, counter, type);
                 grid[row][col] = cell;
-                Enemy enemy = (row == 0) ? new FastEnemy(x, y, fastEnemyImage) : new NormalEnemy(x, y, normalEnemyImage);
+                Enemy enemy = (row == 0) ? new FastEnemy(x, y, img) : new NormalEnemy(x, y, img);
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
             }
@@ -118,9 +121,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
                 String type = (row == 0) ? "Zigzag" : ((row == 1) ? "Fast" : "Normal");
-                Cell cell = new Cell(row, col, x, y, (row >= 2 ? 2 : 1), type);
+                int counter = (row >= 2) ? 2 : 1;
+                Image img = (row == 0) ? zigzagEnemyImage : ((row == 1) ? fastEnemyImage : normalEnemyImage);
+                Cell cell = new Cell(row, col, x, y, counter, type);
                 grid[row][col] = cell;
-                Enemy enemy = (row == 0) ? new ZigzagEnemy(x, y, zigzagEnemyImage) : ((row == 1) ? new FastEnemy(x, y, fastEnemyImage) : new NormalEnemy(x, y, normalEnemyImage));
+                Enemy enemy = (row == 0) ? new ZigzagEnemy(x, y, img) : ((row == 1) ? new FastEnemy(x, y, img) : new NormalEnemy(x, y, img));
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
             }
@@ -139,9 +144,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
-                Cell cell = new Cell(row, col, x, y, 3, (row < 2 ? "Shooter" : "Fast"));
+                String type = (row < 2) ? "Shooter" : "Fast";
+                int counter = 3;
+                Image img = (row < 2) ? shooterEnemyImage : fastEnemyImage;
+                Cell cell = new Cell(row, col, x, y, counter, type);
                 grid[row][col] = cell;
-                Enemy enemy = (row < 2) ? new ShooterEnemy(x, y, shooterEnemyImage) : new FastEnemy(x, y, fastEnemyImage);
+                Enemy enemy = (row < 2) ? new ShooterEnemy(x, y, img) : new FastEnemy(x, y, img);
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
             }
@@ -154,9 +162,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         for (int row = 0; row < 5; row++) {
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
-                Cell cell = new Cell(row, col, x, y, 4, (row < 2 ? "Zigzag" : "Shooter"));
+                String type = (row < 2) ? "Zigzag" : "Shooter";
+                int counter = 4;
+                Image img = (row < 2) ? zigzagEnemyImage : shooterEnemyImage;
+                Cell cell = new Cell(row, col, x, y, counter, type);
                 grid[row][col] = cell;
-                Enemy enemy = (row < 2) ? new ZigzagEnemy(x, y, zigzagEnemyImage) : new ShooterEnemy(x, y, shooterEnemyImage);
+                Enemy enemy = (row < 2) ? new ZigzagEnemy(x, y, img) : new ShooterEnemy(x, y, img);
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
             }
@@ -210,9 +221,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             g2d.drawString("CHICKEN INVADERS", 200, 200);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-            g2d.drawString("Press ENTER to Play", 300, 300);
-            g2d.drawString("Press S to open STORE", 290, 350);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 15));
+            g2d.drawString("Press M for Music: " + (SoundManager.getMusicStatus() ? "ON" : "OFF"), 50, 550);
+            g2d.drawString("Press O for SFX: " + (SoundManager.getSFXStatus() ? "ON" : "OFF"), 250, 550);
         } else if (gameState == GameState.PLAYING) {
             plane.draw(g2d);
             for (Enemy enemy : enemies) enemy.draw(g2d);
@@ -223,13 +234,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
-            g2d.drawString("Fire Power: " + plane.getFireCount(), 10, 80);
-        } else if (gameState == GameState.GAMEOVER) {
-            g2d.setColor(Color.RED);
-            g2d.drawString("GAME OVER", 350, 300);
-        } else if (gameState == GameState.WIN) {
-            g2d.setColor(Color.GREEN);
-            g2d.drawString("YOU WIN!", 350, 300);
         }
     }
 
@@ -254,7 +258,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updatePlane() {
         if (leftPressed) plane.moveLeft();
         if (rightPressed) plane.moveRight(getWidth());
-        if (spacePressed && plane.canShoot()) { plane.shoot(bullets); SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav"); }
+        if (spacePressed && plane.canShoot()) {
+            plane.shoot(bullets);
+            SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
+        }
     }
 
     private void updateBullets() {
@@ -343,6 +350,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         enemyCellMap.remove(e);
                         bulletIter.remove();
                         explosions.add(new Explosion(e.getX(), e.getY()));
+                        SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
                         if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
                         if (cell.getCounter() > 0) {
                             Enemy ne = (cell.getEnemyType().equals("Normal")) ? new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage) :
@@ -374,22 +382,26 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-        if (gameState == GameState.MENU) { if (key == KeyEvent.VK_ENTER) startGame(); if (key == KeyEvent.VK_S) gameState = GameState.STORE; }
-        else if (gameState == GameState.PLAYING) {
+        if (gameState == GameState.MENU) {
+            if (key == KeyEvent.VK_ENTER) startGame();
+            if (key == KeyEvent.VK_S) gameState = GameState.STORE;
+            if (key == KeyEvent.VK_M) SoundManager.toggleMusic();
+            if (key == KeyEvent.VK_O) SoundManager.toggleSFX();
+        } else if (gameState == GameState.PLAYING) {
             if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = true;
             if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = true;
             if (key == KeyEvent.VK_SPACE) spacePressed = true;
-        } else if (gameState == GameState.GAMEOVER || gameState == GameState.WIN) { if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU; }
+        } else if (gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
+            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        if (gameState == GameState.PLAYING) {
-            int key = e.getKeyCode();
-            if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
-            if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
-            if (key == KeyEvent.VK_SPACE) spacePressed = false;
-        }
+        int key = e.getKeyCode();
+        if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
+        if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
+        if (key == KeyEvent.VK_SPACE) spacePressed = false;
     }
     @Override public void keyTyped(KeyEvent e) {}
 }
