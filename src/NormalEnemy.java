@@ -9,6 +9,11 @@ public class NormalEnemy extends Enemy {
     }
 
     @Override
+    public void move() {
+        y += 1;
+    }
+
+    @Override
     public void draw(Graphics2D g2d) {
         if (image != null) {
             g2d.drawImage(image, x, y, 40, 40, null);

@@ -1,28 +1,30 @@
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 
 public class ZigzagEnemy extends Enemy {
-    private Image image;
-    private double angle = 0; // برای کنترل نوسان
 
     public ZigzagEnemy(int x, int y, Image image) {
-        super(x, y);
-        this.image = image;
+        super(x, y, image);
     }
 
     @Override
     public void move() {
-        x += 1;
-        angle += 0.1;
-        y += (int) (Math.sin(angle) * 3);
+        // منطق حرکت زیگزاگی
+        x += (Math.sin(y * 0.1) * 2); // حرکت به چپ و راست بر اساس Y
+        y += 1; // حرکت تدریجی به پایین
     }
 
     @Override
     public void draw(Graphics2D g2d) {
         if (image != null) {
-            g2d.drawImage(image, x, y, width, height, null);
-        } else {
-            g2d.setColor(Color.MAGENTA);
-            g2d.fillOval(x, y, width, height);
+            g2d.drawImage(image, x, y, 40, 40, null);
         }
+    }
+
+    @Override
+    public Rectangle getBounds() {
+        // بازگرداندن محدوده برخورد برای تشخیص تصادف تیر با دشمن
+        return new Rectangle(x, y, 40, 40);
     }
 }
