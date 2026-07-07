@@ -9,8 +9,11 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
-    private enum GameState { MENU, STORE, PLAYING, GAMEOVER, WIN }
+    private enum GameState { MENU, PLAYING, GAMEOVER, WIN, HIGH_SCORES, SETTINGS, HOW_TO_PLAY }
     private GameState gameState = GameState.MENU;
+
+    private String[] menuOptions = {"New Game", "High Scores", "Settings", "How to Play", "Exit"};
+    private int currentMenuSelection = 0;
 
     private Timer timer;
     private Plane plane;
@@ -204,14 +207,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         boss.setHealth(100);
     }
 
-    private void buyPlane(int type, int price) {
-        if (ScoreManager.coins >= price) {
-            ScoreManager.coins -= price;
-            ScoreManager.selectedPlane = type;
-            ScoreManager.save();
-        }
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -219,11 +214,42 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         if (gameState == GameState.MENU) {
             g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.drawString("CHICKEN INVADERS", 150, 150);
+
+            g2d.setFont(new Font("Arial", Font.BOLD, 30));
+            for (int i = 0; i < menuOptions.length; i++) {
+                if (i == currentMenuSelection) {
+                    g2d.setColor(Color.YELLOW);
+                    g2d.drawString("> " + menuOptions[i] + " <", 280, 280 + (i * 50));
+                } else {
+                    g2d.setColor(Color.WHITE);
+                    g2d.drawString(menuOptions[i], 310, 280 + (i * 50));
+                }
+            }
+        } else if (gameState == GameState.HIGH_SCORES) {
+            g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
-            g2d.drawString("CHICKEN INVADERS", 200, 200);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 15));
-            g2d.drawString("Press M for Music: " + (SoundManager.getMusicStatus() ? "ON" : "OFF"), 50, 550);
-            g2d.drawString("Press O for SFX: " + (SoundManager.getSFXStatus() ? "ON" : "OFF"), 250, 550);
+            g2d.drawString("HIGH SCORES", 250, 150);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+            g2d.drawString("1. Player - 0 pts - Level 1", 280, 250);
+            g2d.drawString("Press ESC to return", 300, 500);
+        } else if (gameState == GameState.SETTINGS) {
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 40));
+            g2d.drawString("SETTINGS", 300, 150);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+            g2d.drawString("Music: " + (SoundManager.getMusicStatus() ? "ON" : "OFF") + " (Press M)", 300, 250);
+            g2d.drawString("SFX: " + (SoundManager.getSFXStatus() ? "ON" : "OFF") + " (Press O)", 300, 300);
+            g2d.drawString("Press ESC to return", 300, 500);
+        } else if (gameState == GameState.HOW_TO_PLAY) {
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 40));
+            g2d.drawString("HOW TO PLAY", 250, 150);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+            g2d.drawString("Left/Right Arrows: Move", 280, 250);
+            g2d.drawString("Spacebar: Shoot", 280, 300);
+            g2d.drawString("Press ESC to return", 300, 500);
         } else if (gameState == GameState.PLAYING) {
             plane.draw(g2d);
             for (Enemy enemy : enemies) enemy.draw(g2d);
@@ -234,6 +260,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
+        } else if (gameState == GameState.GAMEOVER) {
+            g2d.setColor(Color.RED);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.drawString("GAME OVER", 250, 300);
+        } else if (gameState == GameState.WIN) {
+            g2d.setColor(Color.GREEN);
+            g2d.setFont(new Font("Arial", Font.BOLD, 50));
+            g2d.drawString("YOU WIN!", 280, 300);
         }
     }
 
@@ -250,7 +284,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             updateBossBullets();
             checkCollisions();
             checkLevelUp();
-            if (plane.getLives() <= 0) { gameState = GameState.GAMEOVER; ScoreManager.coins += score; ScoreManager.save(); }
+            if (plane.getLives() <= 0) {
+                gameState = GameState.GAMEOVER;
+                ScoreManager.coins += score;
+                ScoreManager.save();
+            }
         }
         repaint();
     }
@@ -266,7 +304,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateBullets() {
         Iterator<Bullet> iter = bullets.iterator();
-        while (iter.hasNext()) { Bullet b = iter.next(); b.move(); if (b.getY() < 0) iter.remove(); }
+        while (iter.hasNext()) {
+            Bullet b = iter.next();
+            b.move();
+            if (b.getY() < 0) iter.remove();
+        }
     }
 
     private void updatePowerUps() {
@@ -283,7 +325,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateExplosions() {
         Iterator<Explosion> iter = explosions.iterator();
-        while (iter.hasNext()) { if (!iter.next().update()) iter.remove(); }
+        while (iter.hasNext()) {
+            if (!iter.next().update()) iter.remove();
+        }
     }
 
     private void updateEnemies() {
@@ -296,13 +340,23 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (enemy.getX() <= 0 && gridDirection == -1) { hitEdge = true; break; }
             }
         }
-        if (hitEdge) { gridDirection *= -1; for (Enemy enemy : enemies) enemy.setY(enemy.getY() + gridStepY); }
-        else { for (Enemy enemy : enemies) { if (!(enemy instanceof ZigzagEnemy)) enemy.setX(enemy.getX() + (int)(gridSpeedX * gridDirection)); } }
+        if (hitEdge) {
+            gridDirection *= -1;
+            for (Enemy enemy : enemies) enemy.setY(enemy.getY() + gridStepY);
+        } else {
+            for (Enemy enemy : enemies) {
+                if (!(enemy instanceof ZigzagEnemy)) enemy.setX(enemy.getX() + (int)(gridSpeedX * gridDirection));
+            }
+        }
     }
 
     private void updateEggs() {
         Iterator<Egg> iter = eggs.iterator();
-        while (iter.hasNext()) { Egg egg = iter.next(); egg.move(); if (egg.getY() > getHeight()) iter.remove(); }
+        while (iter.hasNext()) {
+            Egg egg = iter.next();
+            egg.move();
+            if (egg.getY() > getHeight()) iter.remove();
+        }
     }
 
     private void updateBoss() {
@@ -326,7 +380,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateBossBullets() {
         Iterator<BossBullet> iter = bossBullets.iterator();
-        while (iter.hasNext()) { BossBullet b = iter.next(); b.move(); if (b.getY() > getHeight()) iter.remove(); }
+        while (iter.hasNext()) {
+            BossBullet b = iter.next();
+            b.move();
+            if (b.getY() > getHeight()) iter.remove();
+        }
     }
 
     private void checkCollisions() {
@@ -336,9 +394,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             Bullet b = bulletIter.next();
             Rectangle bBounds = b.getBounds();
             boolean bulletRemoved = false;
+
             if (boss != null && bBounds.intersects(new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()))) {
-                boss.takeDamage(1 * plane.getDamageMultiplier()); bulletIter.remove(); bulletRemoved = true;
+                boss.takeDamage(1 * plane.getDamageMultiplier());
+                bulletIter.remove();
+                bulletRemoved = true;
             }
+
             if (!bulletRemoved) {
                 Iterator<Enemy> enemyIter = enemies.iterator();
                 while (enemyIter.hasNext()) {
@@ -351,13 +413,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         bulletIter.remove();
                         explosions.add(new Explosion(e.getX(), e.getY()));
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
+
                         if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
+
                         if (cell.getCounter() > 0) {
                             Enemy ne = (cell.getEnemyType().equals("Normal")) ? new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage) :
                                     (cell.getEnemyType().equals("Fast")) ? new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage) :
                                             (cell.getEnemyType().equals("Zigzag")) ? new ZigzagEnemy(cell.getX(), cell.getY(), zigzagEnemyImage) :
                                                     new ShooterEnemy(cell.getX(), cell.getY(), shooterEnemyImage);
-                            newSpawns.add(ne); enemyCellMap.put(ne, cell);
+                            newSpawns.add(ne);
+                            enemyCellMap.put(ne, cell);
                         }
                         break;
                     }
@@ -370,21 +435,42 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void checkLevelUp() {
         if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
             currentLevel++;
-            if (currentLevel == 2) initLevel2(); else if (currentLevel == 3) initLevel3(); else if (currentLevel == 4) initLevel4();
-            else if (currentLevel == 5) initLevel5(); else if (currentLevel == 6) initLevel6(); else if (currentLevel == 7) initLevel7();
+            if (currentLevel == 2) initLevel2();
+            else if (currentLevel == 3) initLevel3();
+            else if (currentLevel == 4) initLevel4();
+            else if (currentLevel == 5) initLevel5();
+            else if (currentLevel == 6) initLevel6();
+            else if (currentLevel == 7) initLevel7();
             else if (currentLevel == 8) initLevel8();
         } else if (boss != null && boss.getHealth() <= 0) {
             boss = null;
-            if (currentLevel == 8) gameState = GameState.WIN; else { currentLevel++; initLevel5(); }
+            if (currentLevel == 8) gameState = GameState.WIN;
+            else { currentLevel++; initLevel5(); }
         }
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
+
         if (gameState == GameState.MENU) {
-            if (key == KeyEvent.VK_ENTER) startGame();
-            if (key == KeyEvent.VK_S) gameState = GameState.STORE;
+            if (key == KeyEvent.VK_UP) {
+                currentMenuSelection--;
+                if (currentMenuSelection < 0) currentMenuSelection = menuOptions.length - 1;
+            } else if (key == KeyEvent.VK_DOWN) {
+                currentMenuSelection++;
+                if (currentMenuSelection > menuOptions.length - 1) currentMenuSelection = 0;
+            } else if (key == KeyEvent.VK_ENTER) {
+                if (currentMenuSelection == 0) startGame();
+                else if (currentMenuSelection == 1) gameState = GameState.HIGH_SCORES;
+                else if (currentMenuSelection == 2) gameState = GameState.SETTINGS;
+                else if (currentMenuSelection == 3) gameState = GameState.HOW_TO_PLAY;
+                else if (currentMenuSelection == 4) System.exit(0);
+            }
+        } else if (gameState == GameState.HIGH_SCORES || gameState == GameState.HOW_TO_PLAY) {
+            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
+        } else if (gameState == GameState.SETTINGS) {
+            if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
             if (key == KeyEvent.VK_M) SoundManager.toggleMusic();
             if (key == KeyEvent.VK_O) SoundManager.toggleSFX();
         } else if (gameState == GameState.PLAYING) {
@@ -399,9 +485,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyReleased(KeyEvent e) {
         int key = e.getKeyCode();
-        if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
-        if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
-        if (key == KeyEvent.VK_SPACE) spacePressed = false;
+        if (gameState == GameState.PLAYING) {
+            if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = false;
+            if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = false;
+            if (key == KeyEvent.VK_SPACE) spacePressed = false;
+        }
     }
-    @Override public void keyTyped(KeyEvent e) {}
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
 }
