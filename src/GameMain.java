@@ -19,15 +19,15 @@ public class GameMain {
 
         JPanel mainPanel = new JPanel(new CardLayout());
 
-        
         GamePanel gamePanel = new GamePanel();
         LoginPanel loginPanel = new LoginPanel();
-        MainMenuPanel mainMenuPanel = new MainMenuPanel(mainPanel, gamePanel);
 
-
+       
         mainPanel.add(loginPanel, "LoginScreen");
-        mainPanel.add(mainMenuPanel, "MainMenuScreen");
+
+
         mainPanel.add(gamePanel, "GameScreen");
+        mainPanel.add(gamePanel, "MainMenuScreen");
 
         frame.add(mainPanel);
         frame.setVisible(true);
