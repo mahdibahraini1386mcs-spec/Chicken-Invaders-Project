@@ -17,6 +17,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private ArrayList<Enemy> enemies;
     private ArrayList<Bullet> bullets;
     private ArrayList<Egg> eggs;
+    private ArrayList<PowerUp> powerUps;
     private Cell[][] grid;
     private HashMap<Enemy, Cell> enemyCellMap;
     private BossEnemy boss;
@@ -46,9 +47,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         addAncestorListener(new AncestorListener() {
             @Override
-            public void ancestorAdded(AncestorEvent event) {
-                requestFocusInWindow();
-            }
+            public void ancestorAdded(AncestorEvent event) { requestFocusInWindow(); }
             @Override
             public void ancestorRemoved(AncestorEvent event) {}
             @Override
@@ -78,6 +77,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         enemies = new ArrayList<>();
         bullets = new ArrayList<>();
         eggs = new ArrayList<>();
+        powerUps = new ArrayList<>();
         bossBullets = new ArrayList<>();
         enemyCellMap = new HashMap<>();
         grid = new Cell[5][8];
@@ -247,6 +247,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (Enemy enemy : enemies) enemy.draw(g2d);
             for (Bullet bullet : bullets) bullet.draw(g2d);
             for (Egg egg : eggs) egg.draw(g2d);
+            for (PowerUp pu : powerUps) pu.draw(g2d);
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
@@ -276,6 +277,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             updateBullets();
             updateEnemies();
             updateEggs();
+            updatePowerUps();
             updateBoss();
             updateBossBullets();
             checkCollisions();
@@ -304,6 +306,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             Bullet b = iter.next();
             b.move();
             if (b.getY() < 0) iter.remove();
+        }
+    }
+
+    private void updatePowerUps() {
+        Iterator<PowerUp> iter = powerUps.iterator();
+        while (iter.hasNext()) {
+            PowerUp p = iter.next();
+            p.move();
+            if (p.getBounds().intersects(new Rectangle(plane.getX(), plane.getY(), plane.getWidth(), plane.getHeight()))) {
+                if (p.getType().equals("AddFire")) plane.addFire();
+                iter.remove();
+            } else if (p.getY() > getHeight()) iter.remove();
         }
     }
 
@@ -388,7 +402,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             Bullet b = bulletIter.next();
             Rectangle bBounds = b.getBounds();
             boolean bulletRemoved = false;
-
             if (boss != null) {
                 if (bBounds.intersects(new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()))) {
                     boss.takeDamage(1 * plane.getDamageMultiplier());
@@ -397,7 +410,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
                 }
             }
-
             if (!bulletRemoved) {
                 Iterator<Enemy> enemyIter = enemies.iterator();
                 while (enemyIter.hasNext()) {
@@ -412,8 +424,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         else if (e instanceof FastEnemy) score += 15;
                         else if (e instanceof ZigzagEnemy) score += 20;
                         else if (e instanceof ShooterEnemy) score += 25;
+                        if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
-
                         if (cell.getCounter() > 0) {
                             String type = cell.getEnemyType();
                             Enemy newEnemy = null;
@@ -432,7 +444,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
         enemies.addAll(newSpawns);
-
         Rectangle pBounds = new Rectangle(plane.getX(), plane.getY(), plane.getWidth(), plane.getHeight());
         Iterator<Egg> eggIter = eggs.iterator();
         while (eggIter.hasNext()) {
@@ -450,9 +461,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 bbIter.remove();
             }
         }
-        if (boss != null && new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()).intersects(pBounds)) {
-            plane.loseLife();
-        }
+        if (boss != null && new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()).intersects(pBounds)) plane.loseLife();
     }
 
     private void checkLevelUp() {
@@ -469,14 +478,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         } else if (boss != null && boss.getHealth() <= 0) {
             score += (currentLevel == 4) ? 500 : 1000;
             boss = null;
-            if (currentLevel == 8) {
-                gameState = GameState.WIN;
-                ScoreManager.coins += score;
-                ScoreManager.save();
-            } else {
-                currentLevel++;
-                initLevel5();
-            }
+            if (currentLevel == 8) { gameState = GameState.WIN; ScoreManager.coins += score; ScoreManager.save(); }
+            else { currentLevel++; initLevel5(); }
         }
     }
 
