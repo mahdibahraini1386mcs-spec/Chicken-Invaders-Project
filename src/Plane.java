@@ -1,40 +1,26 @@
 import java.awt.*;
+import java.util.ArrayList;
 
 public class Plane {
-    private int x, y;
-    private int width = 50, height = 50;
+    private int x, y, width = 50, height = 50;
+    private int speed = 5;
+    private int lives = 3;
+    private int fireCount = 1;
+    private long lastShotTime = 0;
+    private long fireRate = 300;
     private Image image;
 
-    private int speed;
-    private int maxLives;
-    private int lives;
-    private int fireRate;
-    private int damageMultiplier;
-    private long lastShotTime = 0;
-
-    public Plane(int startX, int startY, Image image, int type) {
-        this.x = startX;
-        this.y = startY;
+    public Plane(int x, int y, Image image, int type) {
+        this.x = x;
+        this.y = y;
         this.image = image;
-
-        switch(type) {
-            case 1: speed = 7; fireRate = 250; maxLives = 3; damageMultiplier = 1; break; // Fast
-            case 2: speed = 4; fireRate = 200; maxLives = 5; damageMultiplier = 1; break; // Heavy
-            case 3: speed = 5; fireRate = 150; maxLives = 3; damageMultiplier = 2; break; // Sniper (2x Damage to Boss)
-            default: speed = 5; fireRate = 300; maxLives = 3; damageMultiplier = 1; break; // Default
-        }
-        this.lives = maxLives;
+        if (type == 1) { speed = 7; fireRate = 250; }
+        else if (type == 2) { speed = 4; fireRate = 200; lives = 5; }
+        else if (type == 3) { speed = 5; fireRate = 150; }
     }
 
-    public void moveLeft() {
-        x -= speed;
-        if (x < 0) x = 0;
-    }
-
-    public void moveRight(int panelWidth) {
-        x += speed;
-        if (x > panelWidth - width) x = panelWidth - width;
-    }
+    public void moveLeft() { if (x > 0) x -= speed; }
+    public void moveRight(int panelWidth) { if (x < panelWidth - width) x += speed; }
 
     public boolean canShoot() {
         long currentTime = System.currentTimeMillis();
@@ -45,22 +31,28 @@ public class Plane {
         return false;
     }
 
-    public void draw(Graphics2D g2d) {
-        if (image != null) {
-            g2d.drawImage(image, x, y, width, height, null);
-        } else {
-            g2d.setColor(Color.GREEN);
-            int[] xPoints = {x, x + width / 2, x + width};
-            int[] yPoints = {y + height, y, y + height};
-            g2d.fillPolygon(xPoints, yPoints, 3);
+    public void shoot(ArrayList<Bullet> bullets) {
+        int startX = x + width / 2;
+        for (int i = 0; i < fireCount; i++) {
+            int offset = (i - (fireCount - 1) / 2) * 20;
+            bullets.add(new Bullet(startX + offset - 2, y));
         }
     }
 
+    public void addFire() {
+        if (fireCount < 5) fireCount++;
+    }
+
+    public void loseLife() { lives--; }
     public int getX() { return x; }
     public int getY() { return y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public int getLives() { return lives; }
-    public void loseLife() { lives--; }
-    public int getDamageMultiplier() { return damageMultiplier; }
+    public int getFireCount() { return fireCount; }
+    public int getDamageMultiplier() { return (ScoreManager.selectedPlane == 3) ? 2 : 1; }
+
+    public void draw(Graphics2D g2d) {
+        if (image != null) g2d.drawImage(image, x, y, width, height, null);
+    }
 }

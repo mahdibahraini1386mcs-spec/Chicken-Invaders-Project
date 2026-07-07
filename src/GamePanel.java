@@ -250,6 +250,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("Fire Power: " + plane.getFireCount(), 10, 80);
         } else if (gameState == GameState.GAMEOVER) {
             g2d.setColor(Color.RED);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
@@ -291,7 +293,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (leftPressed) plane.moveLeft();
         if (rightPressed) plane.moveRight(getWidth());
         if (spacePressed && plane.canShoot()) {
-            bullets.add(new Bullet(plane.getX() + plane.getWidth() / 2 - 2, plane.getY()));
+            plane.shoot(bullets);
             SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
         }
     }

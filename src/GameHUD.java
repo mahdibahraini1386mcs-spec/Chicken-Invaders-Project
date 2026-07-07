@@ -1,18 +1,24 @@
 import java.awt.*;
 
 public class GameHUD {
-    public static void draw(Graphics2D g2d, int score, int highScore, int lives, int level) {
+    public static void draw(Graphics2D g2d, int score, int coins, int lives, int level) {
         g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("SansSerif", Font.BOLD, 18));
+        g2d.setFont(new Font("Arial", Font.BOLD, 18));
 
-        g2d.drawString("Level: " + level, 20, 30);
-        g2d.drawString("Score: " + score, 20, 60);
-        g2d.drawString("High Score: " + highScore, 20, 90);
-        g2d.drawString("Lives: ", 20, 120);
 
-        g2d.setColor(Color.RED);
-        for (int i = 0; i < lives; i++) {
-            g2d.fillOval(80 + (i * 30), 105, 20, 20);
-        }
+        g2d.drawString("Score: " + score, 10, 25);
+
+        // نمایش مرحله
+        g2d.drawString("Level: " + level, 10, 45);
+
+        // نمایش جان
+        g2d.drawString("Lives: " + lives, 10, 65);
+
+        // نمایش سکه‌های جمع‌آوری شده
+        g2d.drawString("Coins: " + coins, 700, 25);
+
+        // راهنمای سریع کلیدها
+        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
+        g2d.drawString("P: Pause | ESC: Menu", 680, 580);
     }
 }
