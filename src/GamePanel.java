@@ -60,8 +60,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         ScoreManager.load();
         timer = new Timer(16, this);
         timer.start();
-
-        // فراخوانی موزیک اصلی بازی
         SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Main Theme.wav");
     }
 
@@ -232,64 +230,185 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         if (gameState == GameState.LOGIN) {
             if (loginBgImage != null) g2d.drawImage(loginBgImage, 0, 0, getWidth(), getHeight(), null);
-
             g2d.setColor(new Color(0, 0, 0, 150));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-
             g2d.setColor(Color.YELLOW);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             g2d.drawString("WELCOME TO MAHDI'S PROJECT", 85, 250);
-
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.PLAIN, 20));
             g2d.drawString("Press ENTER to Continue", 280, 450);
 
         } else if (gameState == GameState.MENU) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
-            g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Arial", Font.BOLD, 50));
-            g2d.drawString("CHICKEN INVADERS", 150, 150);
-
-            g2d.setFont(new Font("Arial", Font.BOLD, 30));
+            g2d.setColor(new Color(0, 0, 0, 80));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            long time = System.currentTimeMillis();
+            String title = "CHICKEN INVADERS";
+            g2d.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 65));
+            int titleWidth = g2d.getFontMetrics().stringWidth(title);
+            int titleX = (getWidth() - titleWidth) / 2;
+            int titleY = 150 + (int)(Math.sin(time / 300.0) * 15);
+            for(int i = 8; i >= 1; i--) {
+                g2d.setColor(new Color(255, 0, 0, 30));
+                g2d.drawString(title, titleX - i, titleY + i);
+                g2d.drawString(title, titleX + i, titleY - i);
+            }
+            GradientPaint titleGp = new GradientPaint(titleX, titleY - 60, Color.YELLOW, titleX, titleY, new Color(255, 69, 0));
+            g2d.setPaint(titleGp);
+            g2d.drawString(title, titleX, titleY);
+            g2d.setColor(new Color(255, 255, 255, 100));
+            Shape oldClip = g2d.getClip();
+            g2d.setClip(new Rectangle(titleX, titleY - 65, titleWidth, 35));
+            g2d.drawString(title, titleX, titleY);
+            g2d.setClip(oldClip);
+            g2d.setFont(new Font("Arial", Font.BOLD, 35));
+            int startY = 280;
             for (int i = 0; i < menuOptions.length; i++) {
+                String text = menuOptions[i];
+                int textWidth = g2d.getFontMetrics().stringWidth(text);
+                int textX = (getWidth() - textWidth) / 2;
+                int y = startY + (i * 60);
                 if (i == currentMenuSelection) {
+                    int alpha = 80 + (int)(Math.abs(Math.sin(time / 200.0)) * 80);
+                    g2d.setColor(new Color(0, 255, 255, alpha));
+                    g2d.fillRoundRect(textX - 50, y - 40, textWidth + 100, 55, 30, 30);
+                    g2d.setColor(new Color(0, 255, 255, 200));
+                    g2d.setStroke(new BasicStroke(3));
+                    g2d.drawRoundRect(textX - 50, y - 40, textWidth + 100, 55, 30, 30);
+                    int arrowOffset = 25 + (int)(Math.abs(Math.sin(time / 150.0)) * 15);
                     g2d.setColor(Color.YELLOW);
-                    g2d.drawString("> " + menuOptions[i] + " <", 280, 280 + (i * 50));
+                    g2d.drawString(">", textX - arrowOffset - 15, y);
+                    g2d.drawString("<", textX + textWidth + arrowOffset - 5, y);
+                    GradientPaint optionGp = new GradientPaint(textX, y - 35, Color.WHITE, textX, y, Color.CYAN);
+                    g2d.setPaint(optionGp);
+                    g2d.drawString(text, textX, y);
                 } else {
-                    g2d.setColor(Color.WHITE);
-                    g2d.drawString(menuOptions[i], 310, 280 + (i * 50));
+                    g2d.setColor(new Color(0, 0, 0, 200));
+                    g2d.drawString(text, textX + 3, y + 3);
+                    g2d.setColor(new Color(180, 180, 180, 200));
+                    g2d.drawString(text, textX, y);
                 }
             }
+
         } else if (gameState == GameState.HIGH_SCORES) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(0, 0, 0, 180));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            int panelWidth = 600, panelHeight = 450;
+            int px = (getWidth() - panelWidth) / 2, py = (getHeight() - panelHeight) / 2;
+            g2d.setColor(new Color(30, 20, 10, 220));
+            g2d.fillRoundRect(px, py, panelWidth, panelHeight, 40, 40);
+            g2d.setColor(new Color(255, 215, 0, 200));
+            g2d.setStroke(new BasicStroke(4));
+            g2d.drawRoundRect(px, py, panelWidth, panelHeight, 40, 40);
+            String title = "🏆 HALL OF FAME 🏆";
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
-            g2d.drawString("HIGH SCORES", 250, 150);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-            g2d.drawString("1. Player - 0 pts - Level 1", 280, 250);
-            g2d.drawString("Press ESC to return", 300, 500);
+            g2d.setColor(Color.BLACK);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2 + 3, py + 63);
+            g2d.setColor(new Color(255, 215, 0));
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 60);
+            g2d.setFont(new Font("Arial", Font.BOLD, 20));
+            g2d.setColor(new Color(200, 200, 200));
+            g2d.drawString("RANK", px + 50, py + 130);
+            g2d.drawString("PILOT", px + 180, py + 130);
+            g2d.drawString("SCORE", px + 350, py + 130);
+            g2d.drawString("LEVEL", px + 480, py + 130);
+            g2d.setColor(new Color(255, 215, 0, 100));
+            g2d.drawLine(px + 40, py + 145, px + panelWidth - 40, py + 145);
+            g2d.setFont(new Font("Arial", Font.BOLD, 24));
+            g2d.setColor(new Color(255, 215, 0));
+            g2d.drawString("1ST", px + 50, py + 200); g2d.drawString("Mahdi", px + 180, py + 200); g2d.drawString("9,999", px + 350, py + 200); g2d.drawString("MAX", px + 490, py + 200);
+            g2d.setColor(new Color(192, 192, 192));
+            g2d.drawString("2ND", px + 50, py + 260); g2d.drawString("Player_2", px + 180, py + 260); g2d.drawString("5,430", px + 350, py + 260); g2d.drawString("Lvl 5", px + 490, py + 260);
+            g2d.setColor(new Color(205, 127, 50));
+            g2d.drawString("3RD", px + 50, py + 320); g2d.drawString("Guest", px + 180, py + 320); g2d.drawString("2,100", px + 350, py + 320); g2d.drawString("Lvl 3", px + 490, py + 320);
+            if (System.currentTimeMillis() % 1000 < 500) {
+                g2d.setColor(Color.YELLOW); g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                String escText = "[ Press ESC to return to Menu ]";
+                g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 30);
+            }
+
         } else if (gameState == GameState.SETTINGS) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(new Color(0, 0, 0, 170));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            int panelWidth = 600, panelHeight = 400;
+            int px = (getWidth() - panelWidth) / 2, py = (getHeight() - panelHeight) / 2;
+            g2d.setColor(new Color(20, 10, 40, 220));
+            g2d.fillRoundRect(px, py, panelWidth, panelHeight, 50, 50);
+            g2d.setColor(new Color(255, 0, 255, 180));
+            g2d.setStroke(new BasicStroke(4));
+            g2d.drawRoundRect(px, py, panelWidth, panelHeight, 50, 50);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
-            g2d.drawString("SETTINGS", 300, 150);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-            g2d.drawString("Music: " + (SoundManager.getMusicStatus() ? "ON" : "OFF") + " (Press M)", 300, 250);
-            g2d.drawString("SFX: " + (SoundManager.getSFXStatus() ? "ON" : "OFF") + " (Press O)", 300, 300);
-            g2d.drawString("Press ESC to return", 300, 500);
+            String title = "SYSTEM SETTINGS";
+            g2d.setColor(Color.BLACK);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2 + 3, py + 73);
+            g2d.setColor(Color.MAGENTA);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 70);
+            boolean musicOn = SoundManager.getMusicStatus();
+            boolean sfxOn = SoundManager.getSFXStatus();
+            int row1Y = py + 150;
+            g2d.setFont(new Font("Arial", Font.BOLD, 26));
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("🎵  BACKGROUND MUSIC", px + 60, row1Y + 25);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 16));
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.drawString("Press 'M' on keyboard to toggle", px + 60, row1Y + 50);
+            int sw1X = px + panelWidth - 140;
+            g2d.setColor(musicOn ? new Color(0, 255, 150) : new Color(80, 80, 80));
+            g2d.fillRoundRect(sw1X, row1Y - 5, 80, 40, 40, 40);
+            g2d.setColor(Color.WHITE);
+            g2d.fillOval(musicOn ? sw1X + 42 : sw1X + 4, row1Y - 1, 32, 32);
+            int row2Y = py + 260;
+            g2d.setFont(new Font("Arial", Font.BOLD, 26));
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("🔊  SOUND EFFECTS", px + 60, row2Y + 25);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 16));
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.drawString("Press 'O' on keyboard to toggle", px + 60, row2Y + 50);
+            int sw2X = px + panelWidth - 140;
+            g2d.setColor(sfxOn ? new Color(0, 255, 150) : new Color(80, 80, 80));
+            g2d.fillRoundRect(sw2X, row2Y - 5, 80, 40, 40, 40);
+            g2d.setColor(Color.WHITE);
+            g2d.fillOval(sfxOn ? sw2X + 42 : sw2X + 4, row2Y - 1, 32, 32);
+            if (System.currentTimeMillis() % 1000 < 500) {
+                g2d.setColor(Color.YELLOW);
+                g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                String escText = "[ Press ESC to return to Menu ]";
+                g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 30);
+            }
+
         } else if (gameState == GameState.HOW_TO_PLAY) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
+            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            int panelWidth = 600, panelHeight = 450;
+            int px = (getWidth() - panelWidth) / 2, py = (getHeight() - panelHeight) / 2;
+            g2d.setColor(new Color(15, 15, 30, 220));
+            g2d.fillRoundRect(px, py, panelWidth, panelHeight, 40, 40);
+            g2d.setColor(Color.CYAN);
+            g2d.setStroke(new BasicStroke(3));
+            g2d.drawRoundRect(px, py, panelWidth, panelHeight, 40, 40);
+            String title = "HOW TO PLAY";
+            g2d.setFont(new Font("Arial", Font.BOLD, 45));
+            g2d.setColor(Color.BLACK);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2 + 4, py + 74);
+            g2d.setColor(Color.CYAN);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 70);
+            g2d.setFont(new Font("Arial", Font.BOLD, 22));
             g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Arial", Font.BOLD, 40));
-            g2d.drawString("HOW TO PLAY", 250, 150);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-            g2d.drawString("W/A/S/D or Arrows: Move", 280, 250);
-            g2d.drawString("Spacebar: Shoot", 280, 300);
-            g2d.drawString("P: Pause/Resume", 280, 350);
-            g2d.drawString("ESC: Back to Menu", 280, 400);
-            g2d.drawString("Press ESC to return", 300, 500);
+            String[] instructions = {"🚀   MOVE: W / A / S / D  or  Arrows", "🔫   SHOOT: Spacebar", "⏸️   PAUSE / RESUME: P", "🎯   OBJECTIVE: Survive & Destroy!"};
+            for (int i = 0; i < instructions.length; i++) g2d.drawString(instructions[i], px + 60, py + 160 + (i * 60));
+            if (System.currentTimeMillis() % 1000 < 500) {
+                g2d.setColor(Color.YELLOW); g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                String escText = "[ Press ESC to return to Menu ]";
+                g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 40);
+            }
+
         } else if (gameState == GameState.PLAYING) {
             if (gameBgImage != null) g2d.drawImage(gameBgImage, 0, 0, getWidth(), getHeight(), null);
+            GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
             plane.draw(g2d);
             for (Enemy enemy : enemies) enemy.draw(g2d);
             for (Bullet bullet : bullets) bullet.draw(g2d);
@@ -299,9 +418,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (BossExplosion bex : bossExplosions) bex.draw(g2d);
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
-            GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
+
         } else if (gameState == GameState.PAUSED) {
             if (gameBgImage != null) g2d.drawImage(gameBgImage, 0, 0, getWidth(), getHeight(), null);
+            GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
             plane.draw(g2d);
             for (Enemy enemy : enemies) enemy.draw(g2d);
             for (Bullet bullet : bullets) bullet.draw(g2d);
@@ -311,21 +431,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             for (BossExplosion bex : bossExplosions) bex.draw(g2d);
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
-            GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
 
             g2d.setColor(new Color(0, 0, 0, 150));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-
             g2d.setColor(Color.YELLOW);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
             g2d.drawString("PAUSED", 300, 300);
             g2d.setFont(new Font("Arial", Font.PLAIN, 20));
             g2d.drawString("Press P to Resume", 310, 350);
             g2d.drawString("Press ESC for Main Menu", 280, 390);
+
         } else if (gameState == GameState.GAMEOVER) {
             g2d.setColor(Color.RED);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
             g2d.drawString("GAME OVER", 250, 300);
+
         } else if (gameState == GameState.WIN) {
             g2d.setColor(Color.GREEN);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
@@ -351,7 +471,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 gameState = GameState.GAMEOVER;
                 ScoreManager.coins += score;
                 ScoreManager.save();
-                // فراخوانی صدای باخت و اتمام بازی
                 SoundManager.playSound("mixkit-retro-arcade-game-over-470.wav");
             }
         }
@@ -363,10 +482,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (rightPressed) plane.moveRight(getWidth());
         if (upPressed) plane.moveUp();
         if (downPressed) plane.moveDown(getHeight());
-
         if (spacePressed && plane.canShoot()) {
             plane.shoot(bullets);
-            // فراخوانی صدای شلیک سفینه
             SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
         }
     }
@@ -408,21 +525,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
-
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastEggTime > eggInterval && !enemies.isEmpty()) {
             Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
             eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, eggImage));
             lastEggTime = currentTime;
         }
-
         for (Enemy enemy : enemies) {
             enemy.move();
-            if (enemy.getY() > getHeight()) {
-                enemy.setY(-40);
-            }
+            if (enemy.getY() > getHeight()) enemy.setY(-40);
         }
-
         boolean hitEdge = false;
         for (Enemy enemy : enemies) {
             if (!(enemy instanceof ZigzagEnemy)) {
@@ -484,13 +596,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             Bullet b = bulletIter.next();
             Rectangle bBounds = b.getBounds();
             boolean bulletRemoved = false;
-
             if (boss != null && bBounds.intersects(new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()))) {
                 boss.takeDamage(1 * plane.getDamageMultiplier());
                 bulletIter.remove();
                 bulletRemoved = true;
             }
-
             if (!bulletRemoved) {
                 Iterator<Enemy> enemyIter = enemies.iterator();
                 while (enemyIter.hasNext()) {
@@ -501,13 +611,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         enemyIter.remove();
                         enemyCellMap.remove(e);
                         bulletIter.remove();
-                        explosions.add(new Explosion(e.getX(), e.getY()));
-
-                        // فراخوانی صدای انفجار مرغ‌ها
+                        score += 10;
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
-
                         if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
-
                         if (cell.getCounter() > 0) {
                             Enemy ne = (cell.getEnemyType().equals("Normal")) ? new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage) :
                                     (cell.getEnemyType().equals("Fast")) ? new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage) :
@@ -527,23 +633,18 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void checkLevelUp() {
         if (boss != null && boss.getHealth() <= 0) {
             bossExplosions.add(new BossExplosion(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight(), explosion1Image, explosion2Image));
-
-            // فراخوانی صدای انفجار غول‌ها
             SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
-
+            score += 500;
             boss = null;
             bossDefeatTimer = 100;
         }
-
         if (bossDefeatTimer > 0) {
             bossDefeatTimer--;
             if (bossDefeatTimer == 0) {
                 if (currentLevel == 8) {
                     gameState = GameState.WIN;
-                    // فراخوانی موزیک پیروزی پایان بازی
                     SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Ending Theme.wav");
-                }
-                else { currentLevel++; initLevel5(); }
+                } else { currentLevel++; initLevel5(); }
             }
         } else if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
             currentLevel++;
@@ -560,13 +661,9 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
-
         if (gameState == GameState.LOGIN) {
-            if (key == KeyEvent.VK_ENTER) {
-                gameState = GameState.MENU;
-            }
-        }
-        else if (gameState == GameState.MENU) {
+            if (key == KeyEvent.VK_ENTER) gameState = GameState.MENU;
+        } else if (gameState == GameState.MENU) {
             if (key == KeyEvent.VK_UP) {
                 currentMenuSelection--;
                 if (currentMenuSelection < 0) currentMenuSelection = menuOptions.length - 1;
@@ -576,42 +673,28 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             } else if (key == KeyEvent.VK_ENTER) {
                 if (currentMenuSelection == 0) startGame();
                 else if (currentMenuSelection == 1) gameState = GameState.HIGH_SCORES;
-                else if (currentMenuSelection == 2) {
-                    previousState = GameState.MENU;
-                    gameState = GameState.SETTINGS;
-                }
+                else if (currentMenuSelection == 2) { previousState = GameState.MENU; gameState = GameState.SETTINGS; }
                 else if (currentMenuSelection == 3) gameState = GameState.HOW_TO_PLAY;
                 else if (currentMenuSelection == 4) System.exit(0);
             }
-        }
-        else if (gameState == GameState.PLAYING) {
+        } else if (gameState == GameState.PLAYING) {
             if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_A) leftPressed = true;
             if (key == KeyEvent.VK_RIGHT || key == KeyEvent.VK_D) rightPressed = true;
             if (key == KeyEvent.VK_UP || key == KeyEvent.VK_W) upPressed = true;
             if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_S) downPressed = true;
             if (key == KeyEvent.VK_SPACE) spacePressed = true;
-
             if (key == KeyEvent.VK_P) gameState = GameState.PAUSED;
             if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
-            if (key == KeyEvent.VK_M) {
-                previousState = GameState.PLAYING;
-                gameState = GameState.SETTINGS;
-            }
-        }
-        else if (gameState == GameState.PAUSED) {
+            if (key == KeyEvent.VK_M) { previousState = GameState.PLAYING; gameState = GameState.SETTINGS; }
+        } else if (gameState == GameState.PAUSED) {
             if (key == KeyEvent.VK_P) gameState = GameState.PLAYING;
             if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
-            if (key == KeyEvent.VK_M) {
-                previousState = GameState.PAUSED;
-                gameState = GameState.SETTINGS;
-            }
-        }
-        else if (gameState == GameState.SETTINGS) {
+            if (key == KeyEvent.VK_M) { previousState = GameState.PAUSED; gameState = GameState.SETTINGS; }
+        } else if (gameState == GameState.SETTINGS) {
             if (key == KeyEvent.VK_ESCAPE) gameState = previousState;
             if (key == KeyEvent.VK_M) SoundManager.toggleMusic();
             if (key == KeyEvent.VK_O) SoundManager.toggleSFX();
-        }
-        else if (gameState == GameState.HIGH_SCORES || gameState == GameState.HOW_TO_PLAY || gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
+        } else if (gameState == GameState.HIGH_SCORES || gameState == GameState.HOW_TO_PLAY || gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
             if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
         }
     }
