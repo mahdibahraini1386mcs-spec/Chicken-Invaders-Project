@@ -1,12 +1,12 @@
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 
 public class BossBullet {
-    private int x;
-    private int y;
-    private int speedX;
-    private int speedY;
-    private int width = 12;
-    private int height = 12;
+    private int x, y;
+    private int speedX, speedY;
+    private int width = 25;
+    private int height = 30;
     private Image image;
 
     public BossBullet(int x, int y, int speedX, int speedY, Image image) {
@@ -26,7 +26,7 @@ public class BossBullet {
         if (image != null) {
             g2d.drawImage(image, x, y, width, height, null);
         } else {
-            g2d.setColor(Color.YELLOW);
+            g2d.setColor(java.awt.Color.YELLOW);
             g2d.fillOval(x, y, width, height);
         }
     }
@@ -35,11 +35,5 @@ public class BossBullet {
         return new Rectangle(x, y, width, height);
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
+    public int getY() { return y; }
 }

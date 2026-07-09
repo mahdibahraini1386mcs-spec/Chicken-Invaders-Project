@@ -1,8 +1,9 @@
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 
 public class Bullet {
-    private int x;
-    private int y;
+    private int x, y;
     private int speed = 10;
     private int width = 4;
     private int height = 15;
@@ -17,15 +18,13 @@ public class Bullet {
     }
 
     public void draw(Graphics2D g2d) {
-        g2d.setColor(Color.RED);
+        g2d.setColor(Color.YELLOW);
         g2d.fillRect(x, y, width, height);
-    }
-
-    public int getY() {
-        return y;
     }
 
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
     }
+
+    public int getY() { return y; }
 }

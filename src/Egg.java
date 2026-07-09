@@ -1,11 +1,12 @@
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 
 public class Egg {
-    private int x;
-    private int y;
-    private int speed = 4;
+    private int x, y;
     private int width = 15;
     private int height = 20;
+    private int speed = 4;
     private Image image;
 
     public Egg(int x, int y, Image image) {
@@ -21,17 +22,12 @@ public class Egg {
     public void draw(Graphics2D g2d) {
         if (image != null) {
             g2d.drawImage(image, x, y, width, height, null);
-        } else {
-            g2d.setColor(Color.WHITE);
-            g2d.fillOval(x, y, width, height);
         }
-    }
-
-    public int getY() {
-        return y;
     }
 
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
     }
+
+    public int getY() { return y; }
 }

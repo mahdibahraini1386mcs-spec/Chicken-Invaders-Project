@@ -21,6 +21,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private ArrayList<Egg> eggs;
     private ArrayList<PowerUp> powerUps;
     private ArrayList<Explosion> explosions;
+    private ArrayList<BossExplosion> bossExplosions;
     private Cell[][] grid;
     private HashMap<Enemy, Cell> enemyCellMap;
     private BossEnemy boss;
@@ -37,12 +38,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int gridStepY = 20;
     private long lastEggTime = 0;
     private int eggInterval = 3000;
+    private int bossDefeatTimer = 0;
     private Random random = new Random();
 
     private int currentLevel = 1;
     private int score = 0;
 
     private Image planeImage, normalEnemyImage, fastEnemyImage, zigzagEnemyImage, shooterEnemyImage, bossImage, boss2Image;
+    private Image menuBgImage, gameBgImage, eggImage;
+    private Image explosion1Image, explosion2Image;
 
     public GamePanel() {
         setFocusable(true);
@@ -51,6 +55,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         addKeyListener(this);
 
         explosions = new ArrayList<>();
+        bossExplosions = new ArrayList<>();
         loadImages();
         ScoreManager.load();
         timer = new Timer(16, this);
@@ -66,17 +71,26 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         shooterEnemyImage = ResourceManager.loadImage("chicken", "shooter_chicken.png");
         bossImage = ResourceManager.loadImage("chicken", "boss1.png");
         boss2Image = ResourceManager.loadImage("chicken", "boss2.png");
+
+        menuBgImage = ResourceManager.loadImage("background", "background.jpg");
+        gameBgImage = ResourceManager.loadImage("background", "background2.jpg");
+        eggImage = ResourceManager.loadImage("chicken", "egg.png");
+
+        explosion1Image = ResourceManager.loadImage("airplan", "Explosion.png");
+        explosion2Image = ResourceManager.loadImage("airplan", "Explosion2.png");
     }
 
     private void startGame() {
         score = 0;
         currentLevel = 1;
+        bossDefeatTimer = 0;
         plane = new Plane(375, 500, planeImage, ScoreManager.selectedPlane);
         enemies = new ArrayList<>();
         bullets = new ArrayList<>();
         eggs = new ArrayList<>();
         powerUps = new ArrayList<>();
         explosions = new ArrayList<>();
+        bossExplosions = new ArrayList<>();
         bossBullets = new ArrayList<>();
         enemyCellMap = new HashMap<>();
         grid = new Cell[5][8];
@@ -214,6 +228,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         Graphics2D g2d = (Graphics2D) g;
 
         if (gameState == GameState.MENU) {
+            if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
             g2d.drawString("CHICKEN INVADERS", 150, 150);
@@ -229,6 +244,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 }
             }
         } else if (gameState == GameState.HIGH_SCORES) {
+            if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             g2d.drawString("HIGH SCORES", 250, 150);
@@ -236,6 +252,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.drawString("1. Player - 0 pts - Level 1", 280, 250);
             g2d.drawString("Press ESC to return", 300, 500);
         } else if (gameState == GameState.SETTINGS) {
+            if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             g2d.drawString("SETTINGS", 300, 150);
@@ -244,6 +261,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.drawString("SFX: " + (SoundManager.getSFXStatus() ? "ON" : "OFF") + " (Press O)", 300, 300);
             g2d.drawString("Press ESC to return", 300, 500);
         } else if (gameState == GameState.HOW_TO_PLAY) {
+            if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             g2d.drawString("HOW TO PLAY", 250, 150);
@@ -254,22 +272,26 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.drawString("ESC: Back to Menu", 280, 400);
             g2d.drawString("Press ESC to return", 300, 500);
         } else if (gameState == GameState.PLAYING) {
+            if (gameBgImage != null) g2d.drawImage(gameBgImage, 0, 0, getWidth(), getHeight(), null);
             plane.draw(g2d);
             for (Enemy enemy : enemies) enemy.draw(g2d);
             for (Bullet bullet : bullets) bullet.draw(g2d);
             for (Egg egg : eggs) egg.draw(g2d);
             for (PowerUp pu : powerUps) pu.draw(g2d);
             for (Explosion ex : explosions) ex.draw(g2d);
+            for (BossExplosion bex : bossExplosions) bex.draw(g2d);
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
         } else if (gameState == GameState.PAUSED) {
+            if (gameBgImage != null) g2d.drawImage(gameBgImage, 0, 0, getWidth(), getHeight(), null);
             plane.draw(g2d);
             for (Enemy enemy : enemies) enemy.draw(g2d);
             for (Bullet bullet : bullets) bullet.draw(g2d);
             for (Egg egg : eggs) egg.draw(g2d);
             for (PowerUp pu : powerUps) pu.draw(g2d);
             for (Explosion ex : explosions) ex.draw(g2d);
+            for (BossExplosion bex : bossExplosions) bex.draw(g2d);
             if (boss != null) boss.draw(g2d);
             for (BossBullet bb : bossBullets) bb.draw(g2d);
             GameHUD.draw(g2d, score, ScoreManager.coins, plane.getLives(), currentLevel);
@@ -303,6 +325,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             updateEggs();
             updatePowerUps();
             updateExplosions();
+            updateBossExplosions();
             updateBoss();
             updateBossBullets();
             checkCollisions();
@@ -356,8 +379,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    private void updateBossExplosions() {
+        Iterator<BossExplosion> iter = bossExplosions.iterator();
+        while (iter.hasNext()) {
+            if (!iter.next().update()) iter.remove();
+        }
+    }
+
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastEggTime > eggInterval && !enemies.isEmpty()) {
+            Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
+            eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, eggImage));
+            lastEggTime = currentTime;
+        }
 
         for (Enemy enemy : enemies) {
             enemy.move();
@@ -398,14 +435,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (boss.canShoot(currentLevel == 8 ? 1000 : 1500)) {
             int bx = boss.getX() + boss.getWidth() / 2, by = boss.getY() + boss.getHeight() - 20;
             if (currentLevel == 4) {
-                bossBullets.add(new BossBullet(bx, by, 0, 4, null));
-                bossBullets.add(new BossBullet(bx, by, -4, 0, null));
-                bossBullets.add(new BossBullet(bx, by, 4, 0, null));
-                bossBullets.add(new BossBullet(bx, by, 0, -4, null));
+                bossBullets.add(new BossBullet(bx, by, 0, 4, eggImage));
+                bossBullets.add(new BossBullet(bx, by, -4, 0, eggImage));
+                bossBullets.add(new BossBullet(bx, by, 4, 0, eggImage));
+                bossBullets.add(new BossBullet(bx, by, 0, -4, eggImage));
             } else if (currentLevel == 8) {
                 for (int i = 0; i < 8; i++) {
                     double angle = Math.toRadians(i * 45);
-                    bossBullets.add(new BossBullet(bx, by, (int)(Math.cos(angle)*5), (int)(Math.sin(angle)*5), null));
+                    bossBullets.add(new BossBullet(bx, by, (int)(Math.cos(angle)*5), (int)(Math.sin(angle)*5), eggImage));
                 }
             }
         }
@@ -466,7 +503,20 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void checkLevelUp() {
-        if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
+        if (boss != null && boss.getHealth() <= 0) {
+            bossExplosions.add(new BossExplosion(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight(), explosion1Image, explosion2Image));
+            SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
+            boss = null;
+            bossDefeatTimer = 100;
+        }
+
+        if (bossDefeatTimer > 0) {
+            bossDefeatTimer--;
+            if (bossDefeatTimer == 0) {
+                if (currentLevel == 8) gameState = GameState.WIN;
+                else { currentLevel++; initLevel5(); }
+            }
+        } else if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
             currentLevel++;
             if (currentLevel == 2) initLevel2();
             else if (currentLevel == 3) initLevel3();
@@ -475,10 +525,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             else if (currentLevel == 6) initLevel6();
             else if (currentLevel == 7) initLevel7();
             else if (currentLevel == 8) initLevel8();
-        } else if (boss != null && boss.getHealth() <= 0) {
-            boss = null;
-            if (currentLevel == 8) gameState = GameState.WIN;
-            else { currentLevel++; initLevel5(); }
         }
     }
 
