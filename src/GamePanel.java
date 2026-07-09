@@ -60,6 +60,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         ScoreManager.load();
         timer = new Timer(16, this);
         timer.start();
+
+        // فراخوانی موزیک اصلی بازی
         SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Main Theme.wav");
     }
 
@@ -349,6 +351,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 gameState = GameState.GAMEOVER;
                 ScoreManager.coins += score;
                 ScoreManager.save();
+                // فراخوانی صدای باخت و اتمام بازی
+                SoundManager.playSound("mixkit-retro-arcade-game-over-470.wav");
             }
         }
         repaint();
@@ -362,6 +366,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         if (spacePressed && plane.canShoot()) {
             plane.shoot(bullets);
+            // فراخوانی صدای شلیک سفینه
             SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
         }
     }
@@ -497,6 +502,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         enemyCellMap.remove(e);
                         bulletIter.remove();
                         explosions.add(new Explosion(e.getX(), e.getY()));
+
+                        // فراخوانی صدای انفجار مرغ‌ها
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
 
                         if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
@@ -520,7 +527,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void checkLevelUp() {
         if (boss != null && boss.getHealth() <= 0) {
             bossExplosions.add(new BossExplosion(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight(), explosion1Image, explosion2Image));
+
+            // فراخوانی صدای انفجار غول‌ها
             SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
+
             boss = null;
             bossDefeatTimer = 100;
         }
@@ -528,7 +538,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (bossDefeatTimer > 0) {
             bossDefeatTimer--;
             if (bossDefeatTimer == 0) {
-                if (currentLevel == 8) gameState = GameState.WIN;
+                if (currentLevel == 8) {
+                    gameState = GameState.WIN;
+                    // فراخوانی موزیک پیروزی پایان بازی
+                    SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Ending Theme.wav");
+                }
                 else { currentLevel++; initLevel5(); }
             }
         } else if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
