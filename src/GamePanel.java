@@ -7,8 +7,8 @@ import java.util.Iterator;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
-    private enum GameState { MENU, PLAYING, PAUSED, GAMEOVER, WIN, HIGH_SCORES, SETTINGS, HOW_TO_PLAY }
-    private GameState gameState = GameState.MENU;
+    private enum GameState { LOGIN, MENU, PLAYING, PAUSED, GAMEOVER, WIN, HIGH_SCORES, SETTINGS, HOW_TO_PLAY }
+    private GameState gameState = GameState.LOGIN;
     private GameState previousState = GameState.MENU;
 
     private String[] menuOptions = {"New Game", "High Scores", "Settings", "How to Play", "Exit"};
@@ -45,7 +45,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int score = 0;
 
     private Image planeImage, normalEnemyImage, fastEnemyImage, zigzagEnemyImage, shooterEnemyImage, bossImage, boss2Image;
-    private Image menuBgImage, gameBgImage, eggImage;
+    private Image loginBgImage, menuBgImage, gameBgImage, eggImage;
     private Image explosion1Image, explosion2Image;
 
     public GamePanel() {
@@ -72,6 +72,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         bossImage = ResourceManager.loadImage("chicken", "boss1.png");
         boss2Image = ResourceManager.loadImage("chicken", "boss2.png");
 
+        loginBgImage = ResourceManager.loadImage("background", "morgh.png");
         menuBgImage = ResourceManager.loadImage("background", "background.jpg");
         gameBgImage = ResourceManager.loadImage("background", "background2.jpg");
         eggImage = ResourceManager.loadImage("chicken", "egg.png");
@@ -227,7 +228,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        if (gameState == GameState.MENU) {
+        if (gameState == GameState.LOGIN) {
+            if (loginBgImage != null) g2d.drawImage(loginBgImage, 0, 0, getWidth(), getHeight(), null);
+
+            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+
+            g2d.setColor(Color.YELLOW);
+            g2d.setFont(new Font("Arial", Font.BOLD, 40));
+            g2d.drawString("WELCOME TO MAHDI'S PROJECT", 85, 250);
+
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
+            g2d.drawString("Press ENTER to Continue", 280, 450);
+
+        } else if (gameState == GameState.MENU) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(Color.WHITE);
             g2d.setFont(new Font("Arial", Font.BOLD, 50));
@@ -532,7 +547,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
 
-        if (gameState == GameState.MENU) {
+        if (gameState == GameState.LOGIN) {
+            if (key == KeyEvent.VK_ENTER) {
+                gameState = GameState.MENU;
+            }
+        }
+        else if (gameState == GameState.MENU) {
             if (key == KeyEvent.VK_UP) {
                 currentMenuSelection--;
                 if (currentMenuSelection < 0) currentMenuSelection = menuOptions.length - 1;
