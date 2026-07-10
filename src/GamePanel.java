@@ -706,6 +706,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
         enemies.addAll(newSpawns);
+        Iterator<Egg> eggIter = eggs.iterator();
+        while (eggIter.hasNext()) {
+            Egg egg = eggIter.next();
+            if (plane.getBounds().intersects(egg.getBounds())) {
+                plane.takeDamage();
+                eggIter.remove();
+                SoundManager.playSound("mixkit-player-losing-life-2157.wav");
+            }
+        }
     }
 
     private void checkLevelUp() {
