@@ -34,12 +34,17 @@ public class DatabaseManager {
                     ")";
             stmt.execute(createUsersTable);
 
+            // حل تله ۱ و ۲: تبدیل DATE به TIMESTAMP و اضافه کردن تنظیمات صدا به رکورد هر بازی
             String createScoresTable = "CREATE TABLE IF NOT EXISTS scores (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "username TEXT," +
                     "score INTEGER," +
                     "level INTEGER," +
-                    "play_date DATE DEFAULT (date('now','localtime'))," +
+                    "play_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP," +
+                    "music_on BOOLEAN," +
+                    "shoot_sfx BOOLEAN," +
+                    "hit_sfx BOOLEAN," +
+                    "gameover_sfx BOOLEAN," +
                     "FOREIGN KEY(username) REFERENCES users(username)" +
                     ")";
             stmt.execute(createScoresTable);
@@ -56,9 +61,7 @@ public class DatabaseManager {
             pstmt.setString(2, password);
             pstmt.executeUpdate();
             return true;
-        } catch (SQLException e) {
-            return false;
-        }
+        } catch (SQLException e) { return false; }
     }
 
     public static boolean login(String username, String password) {
@@ -67,12 +70,8 @@ public class DatabaseManager {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return rs.getString("password").equals(password);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            if (rs.next()) return rs.getString("password").equals(password);
+        } catch (SQLException e) { e.printStackTrace(); }
         return false;
     }
 
@@ -103,14 +102,19 @@ public class DatabaseManager {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    public static void saveScore(String username, int score, int level) {
+    // متد ذخیره ارتقا یافت: حالا تنظیمات صدا رو هم دریافت و ذخیره می‌کنه
+    public static void saveScore(String username, int score, int level, UserSettings currentSettings) {
         if (username == null) return;
-        String insertSql = "INSERT INTO scores(username, score, level) VALUES(?, ?, ?)";
+        String insertSql = "INSERT INTO scores(username, score, level, music_on, shoot_sfx, hit_sfx, gameover_sfx) VALUES(?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(insertSql)) {
             pstmt.setString(1, username);
             pstmt.setInt(2, score);
             pstmt.setInt(3, level);
+            pstmt.setBoolean(4, currentSettings.musicOn);
+            pstmt.setBoolean(5, currentSettings.shootSfx);
+            pstmt.setBoolean(6, currentSettings.hitSfx);
+            pstmt.setBoolean(7, currentSettings.gameoverSfx);
             pstmt.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
 
@@ -125,15 +129,20 @@ public class DatabaseManager {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
+    // حل تله ۳: استفاده از GROUP BY و MAX(score) برای جلوگیری از تکرار کاربر
     public static List<ScoreRecord> getTopScores(int limit) {
         List<ScoreRecord> list = new ArrayList<>();
-        String sql = "SELECT username, score, level, play_date FROM scores ORDER BY score DESC LIMIT ?";
+        String sql = "SELECT username, MAX(score) as max_score, level, play_timestamp FROM scores GROUP BY username ORDER BY max_score DESC LIMIT ?";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, limit);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                list.add(new ScoreRecord(rs.getString("username"), rs.getInt("score"), rs.getInt("level"), rs.getString("play_date")));
+                // تبدیل Timestamp طولانی به فرمت خواناتر (فقط تاریخ و ساعت)
+                String rawTime = rs.getString("play_timestamp");
+                String displayTime = (rawTime != null && rawTime.length() > 16) ? rawTime.substring(0, 16) : rawTime;
+
+                list.add(new ScoreRecord(rs.getString("username"), rs.getInt("max_score"), rs.getInt("level"), displayTime));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;

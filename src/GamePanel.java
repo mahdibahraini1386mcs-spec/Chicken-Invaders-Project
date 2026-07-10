@@ -548,7 +548,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 gameState = GameState.GAMEOVER;
                 ScoreManager.coins += score;
                 ScoreManager.save();
-                DatabaseManager.saveScore(currentUser, score, currentLevel);
+                DatabaseManager.saveScore(currentUser, score, currentLevel, userSettings);
                 SoundManager.playSound("mixkit-retro-arcade-game-over-470.wav");
             }
         }
@@ -721,7 +721,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (bossDefeatTimer == 0) {
                 if (currentLevel == 8) {
                     gameState = GameState.WIN;
-                    DatabaseManager.saveScore(currentUser, score, currentLevel);
+                    DatabaseManager.saveScore(currentUser, score, currentLevel, userSettings);
                     SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Ending Theme.wav");
                 } else { currentLevel++; initLevel5(); }
             }
