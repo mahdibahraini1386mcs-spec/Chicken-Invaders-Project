@@ -1,33 +1,27 @@
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
 
 public class Egg {
-    private int x, y;
-    private int width = 15;
-    private int height = 20;
-    private int speed = 4;
-    private Image image;
+    private int x, y, dx, dy;
+    private int width = 15, height = 20;
+    private Image img;
 
-    public Egg(int x, int y, Image image) {
+    public Egg(int x, int y, int dx, int dy, Image img) {
         this.x = x;
         this.y = y;
-        this.image = image;
+        this.dx = dx;
+        this.dy = dy;
+        this.img = img;
     }
 
     public void move() {
-        y += speed;
+        x += dx;
+        y += dy;
     }
 
-    public void draw(Graphics2D g2d) {
-        if (image != null) {
-            g2d.drawImage(image, x, y, width, height, null);
-        }
-    }
-
-    public Rectangle getBounds() {
-        return new Rectangle(x, y, width, height);
-    }
-
+    public int getX() { return x; }
     public int getY() { return y; }
+    public Rectangle getBounds() { return new Rectangle(x, y, width, height); }
+    public void draw(Graphics g) { g.drawImage(img, x, y, width, height, null); }
 }

@@ -45,7 +45,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean spacePressed = false;
 
     private int gridDirection = 1;
-    private double gridSpeedX = 1.2;
+    private double gridSpeedX = 1.0;
     private int gridStepY = 20;
     private long lastEggTime = 0;
     private int eggInterval = 3000;
@@ -111,123 +111,76 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         gameState = GameState.PLAYING;
     }
 
-    private void initLevel1() {
-        gridSpeedX = 1.2; gridStepY = 20; eggInterval = 3000;
+    // --- توابع کمکی برای ساخت دقیق جدول و مرغ‌ها بر اساس داکیومنت ---
+    private Enemy createEnemy(String type, int x, int y) {
+        switch (type) {
+            case "Fast": return new FastEnemy(x, y, fastEnemyImage);
+            case "Zigzag": return new ZigzagEnemy(x, y, zigzagEnemyImage);
+            case "Shooter": return new ShooterEnemy(x, y, shooterEnemyImage);
+            default: return new NormalEnemy(x, y, normalEnemyImage);
+        }
+    }
+
+    private int getEnemyCounter(String type, int level) {
+        if (level <= 3) {
+            switch(type) {
+                case "Fast": return 1;
+                case "Normal": case "Zigzag": case "Shooter": return 2;
+            }
+        } else {
+            switch(type) {
+                case "Fast": return 2;
+                case "Normal": case "Zigzag": case "Shooter": return 3;
+            }
+        }
+        return 1;
+    }
+
+    private void spawnGrid(String[] rowTypes) {
+        gridDirection = 1;
         int startX = 80, startY = 50, hGap = 70, vGap = 50;
         for (int row = 0; row < 5; row++) {
+            String type = rowTypes[row];
             for (int col = 0; col < 8; col++) {
                 int x = startX + col * hGap, y = startY + row * vGap;
-                Cell cell = new Cell(row, col, x, y, 2, "Normal");
+                Cell cell = new Cell(row, col, x, y, getEnemyCounter(type, currentLevel), type);
                 grid[row][col] = cell;
-                NormalEnemy enemy = new NormalEnemy(x, y, normalEnemyImage);
+                Enemy enemy = createEnemy(type, x, y);
                 enemies.add(enemy);
                 enemyCellMap.put(enemy, cell);
             }
         }
     }
 
+    private void initLevel1() {
+        gridSpeedX = 1.0; gridStepY = 20; eggInterval = 3000;
+        spawnGrid(new String[]{"Normal", "Normal", "Normal", "Normal", "Normal"});
+    }
     private void initLevel2() {
         gridSpeedX = 1.5; gridStepY = 20; eggInterval = 2000;
-        int startX = 80, startY = 50, hGap = 70, vGap = 50;
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 8; col++) {
-                int x = startX + col * hGap, y = startY + row * vGap;
-                String type = (row == 0) ? "Fast" : "Normal";
-                int counter = (row == 0) ? 1 : 2;
-                Image img = (row == 0) ? fastEnemyImage : normalEnemyImage;
-                Cell cell = new Cell(row, col, x, y, counter, type);
-                grid[row][col] = cell;
-                Enemy enemy = (row == 0) ? new FastEnemy(x, y, img) : new NormalEnemy(x, y, img);
-                enemies.add(enemy);
-                enemyCellMap.put(enemy, cell);
-            }
-        }
+        spawnGrid(new String[]{"Fast", "Normal", "Normal", "Normal", "Normal"});
     }
-
     private void initLevel3() {
         gridSpeedX = 2.0; gridStepY = 25; eggInterval = 1500;
-        int startX = 80, startY = 50, hGap = 70, vGap = 50;
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 8; col++) {
-                int x = startX + col * hGap, y = startY + row * vGap;
-                String type = (row == 0) ? "Zigzag" : ((row == 1) ? "Fast" : "Normal");
-                int counter = (row >= 2) ? 2 : 1;
-                Image img = (row == 0) ? zigzagEnemyImage : ((row == 1) ? fastEnemyImage : normalEnemyImage);
-                Cell cell = new Cell(row, col, x, y, counter, type);
-                grid[row][col] = cell;
-                Enemy enemy = (row == 0) ? new ZigzagEnemy(x, y, img) : ((row == 1) ? new FastEnemy(x, y, img) : new NormalEnemy(x, y, img));
-                enemies.add(enemy);
-                enemyCellMap.put(enemy, cell);
-            }
-        }
+        spawnGrid(new String[]{"Zigzag", "Fast", "Normal", "Normal", "Normal"});
     }
-
     private void initLevel4() {
         enemies.clear(); eggs.clear();
         boss = new BossEnemy(325, 50, 150, 150, bossImage);
         boss.setHealth(50);
     }
-
     private void initLevel5() {
         gridSpeedX = 2.5; gridStepY = 25; eggInterval = 1000;
-        int startX = 80, startY = 50, hGap = 70, vGap = 50;
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 8; col++) {
-                int x = startX + col * hGap, y = startY + row * vGap;
-                String type = (row < 2) ? "Shooter" : "Fast";
-                int counter = 3;
-                Image img = (row < 2) ? shooterEnemyImage : fastEnemyImage;
-                Cell cell = new Cell(row, col, x, y, counter, type);
-                grid[row][col] = cell;
-                Enemy enemy = (row < 2) ? new ShooterEnemy(x, y, img) : new FastEnemy(x, y, img);
-                enemies.add(enemy);
-                enemyCellMap.put(enemy, cell);
-            }
-        }
+        spawnGrid(new String[]{"Shooter", "Shooter", "Fast", "Fast", "Normal"});
     }
-
     private void initLevel6() {
         gridSpeedX = 3.0; gridStepY = 30; eggInterval = 800;
-        int startX = 80, startY = 50, hGap = 70, vGap = 50;
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 8; col++) {
-                int x = startX + col * hGap, y = startY + row * vGap;
-                String type = (row < 2) ? "Zigzag" : "Shooter";
-                int counter = 4;
-                Image img = (row < 2) ? zigzagEnemyImage : shooterEnemyImage;
-                Cell cell = new Cell(row, col, x, y, counter, type);
-                grid[row][col] = cell;
-                Enemy enemy = (row < 2) ? new ZigzagEnemy(x, y, img) : new ShooterEnemy(x, y, img);
-                enemies.add(enemy);
-                enemyCellMap.put(enemy, cell);
-            }
-        }
+        spawnGrid(new String[]{"Zigzag", "Zigzag", "Shooter", "Shooter", "Normal"});
     }
-
     private void initLevel7() {
         gridSpeedX = 3.5; gridStepY = 30; eggInterval = 700;
-        int startX = 80, startY = 50, hGap = 70, vGap = 50;
-        for (int row = 0; row < 5; row++) {
-            for (int col = 0; col < 8; col++) {
-                int x = startX + col * hGap, y = startY + row * vGap;
-                String type = "Normal";
-                Image img = normalEnemyImage;
-                if (row == 0) { type = "Zigzag"; img = zigzagEnemyImage; }
-                else if (row == 1) { type = "Shooter"; img = shooterEnemyImage; }
-                else if (row == 2) { type = "Fast"; img = fastEnemyImage; }
-                Cell cell = new Cell(row, col, x, y, 4, type);
-                grid[row][col] = cell;
-                Enemy enemy;
-                if (row == 0) enemy = new ZigzagEnemy(x, y, img);
-                else if (row == 1) enemy = new ShooterEnemy(x, y, img);
-                else if (row == 2) enemy = new FastEnemy(x, y, img);
-                else enemy = new NormalEnemy(x, y, img);
-                enemies.add(enemy);
-                enemyCellMap.put(enemy, cell);
-            }
-        }
+        spawnGrid(new String[]{"Zigzag", "Shooter", "Fast", "Normal", "Normal"});
     }
-
     private void initLevel8() {
         enemies.clear(); eggs.clear();
         boss = new BossEnemy(300, 50, 200, 200, boss2Image);
@@ -603,30 +556,62 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastEggTime > eggInterval && !enemies.isEmpty()) {
-            Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
-            eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, eggImage));
-            lastEggTime = currentTime;
-        }
-        for (Enemy enemy : enemies) {
-            enemy.move();
-            if (enemy.getY() > getHeight()) enemy.setY(-40);
-        }
+
+        // منطق حرکت دسته‌جمعی شبکه (Grid Movement)
         boolean hitEdge = false;
-        for (Enemy enemy : enemies) {
-            if (!(enemy instanceof ZigzagEnemy)) {
-                if (enemy.getX() >= getWidth() - 40 && gridDirection == 1) { hitEdge = true; break; }
-                if (enemy.getX() <= 0 && gridDirection == -1) { hitEdge = true; break; }
+        for (int r = 0; r < 5; r++) {
+            for (int c = 0; c < 8; c++) {
+                Cell cell = grid[r][c];
+                if (cell != null && cell.getCounter() > 0) {
+                    if (cell.getX() >= getWidth() - 40 && gridDirection == 1) hitEdge = true;
+                    if (cell.getX() <= 0 && gridDirection == -1) hitEdge = true;
+                }
             }
         }
         if (hitEdge) {
             gridDirection *= -1;
-            for (Enemy enemy : enemies) enemy.setY(enemy.getY() + gridStepY);
-        } else {
-            for (Enemy enemy : enemies) {
-                if (!(enemy instanceof ZigzagEnemy)) enemy.setX(enemy.getX() + (int)(gridSpeedX * gridDirection));
+            for (int r = 0; r < 5; r++) {
+                for (int c = 0; c < 8; c++) {
+                    if (grid[r][c] != null) grid[r][c].setY(grid[r][c].getY() + gridStepY);
+                }
             }
+        } else {
+            for (int r = 0; r < 5; r++) {
+                for (int c = 0; c < 8; c++) {
+                    if (grid[r][c] != null) grid[r][c].setX(grid[r][c].getX() + (int)(gridSpeedX * gridDirection));
+                }
+            }
+        }
+
+        // بروزرسانی موقعیت مرغ‌ها (یا پرواز به سمت سلول، یا حرکت با سلول)
+        for (Enemy enemy : enemies) {
+            Cell cell = enemyCellMap.get(enemy);
+            if (cell != null) {
+                if (enemy.isSpawning()) {
+                    enemy.moveToTarget(cell.getX(), cell.getY());
+                } else {
+                    enemy.setX(cell.getX());
+                    enemy.setY(cell.getY());
+                }
+            }
+        }
+
+        // سیستم تخم‌گذاری و شلیک خاصِ Shooter
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastEggTime > eggInterval && !enemies.isEmpty()) {
+            Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
+            if (!randomEnemy.isSpawning()) {
+                eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, 0, 5, eggImage)); // تخم عمودی عادی
+
+                // تیر افقیِ هدف‌دار برای Shooter
+                if (randomEnemy.getClass().getSimpleName().equals("ShooterEnemy")) {
+                    int dx = plane.getX() - randomEnemy.getX();
+                    int dy = plane.getY() - randomEnemy.getY();
+                    double dist = Math.sqrt(dx*dx + dy*dy);
+                    if(dist > 0) eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, (int)((dx/dist)*6), (int)((dy/dist)*6), eggImage));
+                }
+            }
+            lastEggTime = currentTime;
         }
     }
 
@@ -635,7 +620,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         while (iter.hasNext()) {
             Egg egg = iter.next();
             egg.move();
-            if (egg.getY() > getHeight()) iter.remove();
+            if (egg.getY() > getHeight() || egg.getX() < 0 || egg.getX() > getWidth()) iter.remove();
         }
     }
 
@@ -663,7 +648,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         while (iter.hasNext()) {
             BossBullet b = iter.next();
             b.move();
-            if (b.getY() > getHeight()) iter.remove();
+            if (b.getY() > getHeight() || b.getX() < 0 || b.getX() > getWidth()) iter.remove();
         }
     }
 
@@ -674,6 +659,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             Bullet b = bulletIter.next();
             Rectangle bBounds = b.getBounds();
             boolean bulletRemoved = false;
+
             if (boss != null && bBounds.intersects(new Rectangle(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight()))) {
                 boss.takeDamage(1 * plane.getDamageMultiplier());
                 bulletIter.remove();
@@ -692,11 +678,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         score += 10;
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
                         if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
+
+                        // منطق جایگزینی: اسپاون از گوشه‌ها بجای ظاهر شدن درجا!
                         if (cell.getCounter() > 0) {
-                            Enemy ne = (cell.getEnemyType().equals("Normal")) ? new NormalEnemy(cell.getX(), cell.getY(), normalEnemyImage) :
-                                    (cell.getEnemyType().equals("Fast")) ? new FastEnemy(cell.getX(), cell.getY(), fastEnemyImage) :
-                                            (cell.getEnemyType().equals("Zigzag")) ? new ZigzagEnemy(cell.getX(), cell.getY(), zigzagEnemyImage) :
-                                                    new ShooterEnemy(cell.getX(), cell.getY(), shooterEnemyImage);
+                            int startX = (random.nextBoolean()) ? -50 : getWidth() + 50; // چپ یا راست بیرون کادر
+                            int startY = -50; // بالای کادر
+                            Enemy ne = createEnemy(cell.getEnemyType(), startX, startY);
+                            ne.setSpawning(true); // مرغ جدید باید پرواز کنه
                             newSpawns.add(ne);
                             enemyCellMap.put(ne, cell);
                         }
@@ -706,12 +694,25 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
         enemies.addAll(newSpawns);
+
+        // برخورد تخم‌مرغ‌ها با هواپیما
         Iterator<Egg> eggIter = eggs.iterator();
         while (eggIter.hasNext()) {
             Egg egg = eggIter.next();
             if (plane.getBounds().intersects(egg.getBounds())) {
                 plane.takeDamage();
                 eggIter.remove();
+                SoundManager.playSound("mixkit-player-losing-life-2157.wav");
+            }
+        }
+
+        // برخورد تیرهای باس با هواپیما
+        Iterator<BossBullet> bbIter = bossBullets.iterator();
+        while (bbIter.hasNext()) {
+            BossBullet bb = bbIter.next();
+            if (plane.getBounds().intersects(bb.getBounds())) {
+                plane.takeDamage();
+                bbIter.remove();
                 SoundManager.playSound("mixkit-player-losing-life-2157.wav");
             }
         }
