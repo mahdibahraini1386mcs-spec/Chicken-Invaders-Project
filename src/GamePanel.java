@@ -111,7 +111,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         gameState = GameState.PLAYING;
     }
 
-    // --- توابع کمکی برای ساخت دقیق جدول و مرغ‌ها بر اساس داکیومنت ---
     private Enemy createEnemy(String type, int x, int y) {
         switch (type) {
             case "Fast": return new FastEnemy(x, y, fastEnemyImage);
@@ -166,8 +165,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     private void initLevel4() {
         enemies.clear(); eggs.clear();
-        boss = new BossEnemy(325, 50, 150, 150, bossImage);
-        boss.setHealth(50);
+        boss = new BossEnemy(325, 50, 150, 150, bossImage, 4, 50);
     }
     private void initLevel5() {
         gridSpeedX = 2.5; gridStepY = 25; eggInterval = 1000;
@@ -183,8 +181,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     private void initLevel8() {
         enemies.clear(); eggs.clear();
-        boss = new BossEnemy(300, 50, 200, 200, boss2Image);
-        boss.setHealth(100);
+        boss = new BossEnemy(300, 50, 200, 200, boss2Image, 8, 100);
     }
 
     @Override
@@ -557,7 +554,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
 
-        // منطق حرکت دسته‌جمعی شبکه (Grid Movement)
         boolean hitEdge = false;
         for (int r = 0; r < 5; r++) {
             for (int c = 0; c < 8; c++) {
@@ -583,7 +579,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // بروزرسانی موقعیت مرغ‌ها (یا پرواز به سمت سلول، یا حرکت با سلول)
         for (Enemy enemy : enemies) {
             Cell cell = enemyCellMap.get(enemy);
             if (cell != null) {
@@ -596,14 +591,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // سیستم تخم‌گذاری و شلیک خاصِ Shooter
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastEggTime > eggInterval && !enemies.isEmpty()) {
             Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
             if (!randomEnemy.isSpawning()) {
-                eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, 0, 5, eggImage)); // تخم عمودی عادی
-
-                // تیر افقیِ هدف‌دار برای Shooter
+                eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, 0, 5, eggImage));
                 if (randomEnemy.getClass().getSimpleName().equals("ShooterEnemy")) {
                     int dx = plane.getX() - randomEnemy.getX();
                     int dy = plane.getY() - randomEnemy.getY();
@@ -679,12 +671,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
                         if (random.nextDouble() < 0.2) powerUps.add(new PowerUp(e.getX(), e.getY(), "AddFire"));
 
-                        // منطق جایگزینی: اسپاون از گوشه‌ها بجای ظاهر شدن درجا!
                         if (cell.getCounter() > 0) {
-                            int startX = (random.nextBoolean()) ? -50 : getWidth() + 50; // چپ یا راست بیرون کادر
-                            int startY = -50; // بالای کادر
+                            int startX = (random.nextBoolean()) ? -50 : getWidth() + 50;
+                            int startY = -50;
                             Enemy ne = createEnemy(cell.getEnemyType(), startX, startY);
-                            ne.setSpawning(true); // مرغ جدید باید پرواز کنه
+                            ne.setSpawning(true);
                             newSpawns.add(ne);
                             enemyCellMap.put(ne, cell);
                         }
@@ -695,7 +686,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         enemies.addAll(newSpawns);
 
-        // برخورد تخم‌مرغ‌ها با هواپیما
         Iterator<Egg> eggIter = eggs.iterator();
         while (eggIter.hasNext()) {
             Egg egg = eggIter.next();
@@ -706,7 +696,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // برخورد تیرهای باس با هواپیما
         Iterator<BossBullet> bbIter = bossBullets.iterator();
         while (bbIter.hasNext()) {
             BossBullet bb = bbIter.next();

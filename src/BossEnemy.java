@@ -1,93 +1,112 @@
 import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Rectangle;
 
 public class BossEnemy {
-    private int x, y, width, height;
-    private double realX, realY;
-    private double dx = 1.5;
-    private double dy = 0.5;
-    private double startY;
-    private Image image;
-    private int health;
-    private int maxHealth;
-    private long lastShootTime;
+    private double x, y;
+    private int width, height;
+    private Image img;
+    private int health, maxHealth;
+    private int level;
 
-    public BossEnemy(int x, int y, int width, int height, Image image) {
+    // متغیرهای حرکتی
+    private double dx;
+    private double dy = 1.0; // برای حرکت عمودی غول ۸
+    private double startY;
+    private long startTime;
+    private double accelX = 0.05; // برای شتاب غول ۸
+    private long lastShotTime = 0;
+
+    public BossEnemy(int x, int y, int width, int height, Image img, int level, int maxHealth) {
         this.x = x;
         this.y = y;
-        this.realX = x;
-        this.realY = y;
         this.width = width;
         this.height = height;
-        this.image = image;
-        this.startY = y;
-        this.lastShootTime = System.currentTimeMillis();
-    }
-
-    public void setHealth(int maxHealth) {
+        this.img = img;
+        this.level = level;
         this.maxHealth = maxHealth;
         this.health = maxHealth;
+        this.startY = y;
+        this.startTime = System.currentTimeMillis();
+
+        this.dx = (level == 4) ? 1.5 : 2.0;
     }
 
-    public int getHealth() {
-        return health;
+    public void move() {
+        if (level == 4) {
+            x += dx;
+            if (x <= 0 || x >= 800 - width) {
+                dx = -dx; // برخورد به لبه
+            }
+            long elapsed = System.currentTimeMillis() - startTime;
+            y = startY + Math.sin(elapsed / 500.0) * 15.0; // دامنه 15 پیکسل
+
+        } else if (level == 8) {
+            dx += accelX;
+            if (dx > 4.0) accelX = -0.02; // کاهش شتاب
+            if (dx < -4.0) accelX = 0.02; // افزایش شتاب
+
+            x += dx;
+            if (x <= 0) { x = 0; dx = Math.abs(dx); accelX = 0.05; }
+            if (x >= 800 - width) { x = 800 - width; dx = -Math.abs(dx); accelX = -0.05; }
+
+            // حرکت عمودی
+            y += dy;
+            if (y < startY || y > startY + 100) {
+                dy = -dy; // تغییر جهت عمودی
+            }
+        }
     }
 
-    public void takeDamage(int damage) {
-        health -= damage;
-        if (health < 0) health = 0;
-    }
-
-    public boolean canShoot(long attackRate) {
-        long currentTime = System.currentTimeMillis();
-        if (currentTime - lastShootTime >= attackRate) {
-            lastShootTime = currentTime;
+    public boolean canShoot(int interval) {
+        long now = System.currentTimeMillis();
+        if (now - lastShotTime > interval) {
+            lastShotTime = now;
             return true;
         }
         return false;
     }
 
-    public void move() {
-        realX += dx;
-        if (realX <= 0 || realX >= 800 - width) {
-            dx = -dx;
-        }
-
-        realY += dy;
-        if (realY > startY + 20 || realY < startY - 20) {
-            dy = -dy;
-        }
-
-        x = (int) realX;
-        y = (int) realY;
+    public void takeDamage(int dmg) {
+        health -= dmg;
     }
 
-    public void draw(Graphics2D g2d) {
-        if (image != null) {
-            g2d.drawImage(image, x, y, width, height, null);
-        }
-
-        if (maxHealth > 0) {
-            int barWidth = width;
-            int barHeight = 8;
-            int barX = x;
-            int barY = y - 15;
-
-            g2d.setColor(Color.RED);
-            g2d.fillRect(barX, barY, barWidth, barHeight);
-
-            g2d.setColor(Color.GREEN);
-            int currentBarWidth = (int) ((double) health / maxHealth * barWidth);
-            g2d.fillRect(barX, barY, currentBarWidth, barHeight);
-
-            g2d.setColor(Color.WHITE);
-            g2d.drawRect(barX, barY, barWidth, barHeight);
-        }
-    }
-
-    public int getX() { return x; }
-    public int getY() { return y; }
+    public int getHealth() { return health; }
+    public int getX() { return (int) x; }
+    public int getY() { return (int) y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
+    public Rectangle getBounds() { return new Rectangle((int)x, (int)y, width, height); }
+
+    public void draw(Graphics g) {
+        g.drawImage(img, (int)x, (int)y, width, height, null);
+
+
+        int barWidth = width;
+        int barHeight = 10;
+        int barX = (int)x;
+        int barY = (int)y - 20;
+
+
+        double hpPercent = (double) health / maxHealth;
+        if (hpPercent < 0) hpPercent = 0;
+
+        int red = (int) (255 * (1 - hpPercent) * 2);
+        int green = (int) (255 * hpPercent * 2);
+        red = Math.min(255, Math.max(0, red));
+        green = Math.min(255, Math.max(0, green));
+
+
+        g.setColor(Color.DARK_GRAY);
+        g.fillRect(barX, barY, barWidth, barHeight);
+
+
+        g.setColor(new Color(red, green, 0));
+        g.fillRect(barX, barY, (int)(barWidth * hpPercent), barHeight);
+
+
+        g.setColor(Color.WHITE);
+        g.drawRect(barX, barY, barWidth, barHeight);
+    }
 }
