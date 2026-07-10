@@ -4,12 +4,23 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
 
 public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private enum GameState { LOGIN, MENU, PLAYING, PAUSED, GAMEOVER, WIN, HIGH_SCORES, SETTINGS, HOW_TO_PLAY }
     private GameState gameState = GameState.LOGIN;
     private GameState previousState = GameState.MENU;
+
+    private String usernameInput = "";
+    private String passwordInput = "";
+    private int loginSelection = 0;
+    private String loginMessage = "SYSTEM READY - AWAITING CREDENTIALS";
+    private Color loginMessageColor = Color.YELLOW;
+    public static String currentUser = null;
+
+    private DatabaseManager.UserSettings userSettings = new DatabaseManager.UserSettings(true, true, true, true);
+    private List<DatabaseManager.ScoreRecord> topScores = new ArrayList<>();
 
     private String[] menuOptions = {"New Game", "High Scores", "Settings", "How to Play", "Exit"};
     private int currentMenuSelection = 0;
@@ -54,6 +65,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         setPreferredSize(new Dimension(800, 600));
         addKeyListener(this);
 
+        DatabaseManager.initDB();
+
         explosions = new ArrayList<>();
         bossExplosions = new ArrayList<>();
         loadImages();
@@ -71,12 +84,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         shooterEnemyImage = ResourceManager.loadImage("chicken", "shooter_chicken.png");
         bossImage = ResourceManager.loadImage("chicken", "boss1.png");
         boss2Image = ResourceManager.loadImage("chicken", "boss2.png");
-
         loginBgImage = ResourceManager.loadImage("background", "morgh.png");
         menuBgImage = ResourceManager.loadImage("background", "background.jpg");
         gameBgImage = ResourceManager.loadImage("background", "background2.jpg");
         eggImage = ResourceManager.loadImage("chicken", "egg.png");
-
         explosion1Image = ResourceManager.loadImage("airplan", "Explosion.png");
         explosion2Image = ResourceManager.loadImage("airplan", "Explosion2.png");
     }
@@ -227,23 +238,70 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
+        long time = System.currentTimeMillis();
+        boolean blink = (time % 1000) < 500;
 
         if (gameState == GameState.LOGIN) {
             if (loginBgImage != null) g2d.drawImage(loginBgImage, 0, 0, getWidth(), getHeight(), null);
-            g2d.setColor(new Color(0, 0, 0, 150));
+            g2d.setColor(new Color(0, 0, 0, 180));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-            g2d.setColor(Color.YELLOW);
-            g2d.setFont(new Font("Arial", Font.BOLD, 40));
-            g2d.drawString("WELCOME TO MAHDI'S PROJECT", 85, 250);
+            int panelWidth = 500;
+            int panelHeight = 400;
+            int px = (getWidth() - panelWidth) / 2;
+            int py = (getHeight() - panelHeight) / 2;
+            g2d.setColor(new Color(15, 20, 40, 230));
+            g2d.fillRoundRect(px, py, panelWidth, panelHeight, 30, 30);
+            g2d.setColor(new Color(0, 255, 255, 150));
+            g2d.setStroke(new BasicStroke(3));
+            g2d.drawRoundRect(px, py, panelWidth, panelHeight, 30, 30);
+            g2d.setFont(new Font("Arial", Font.BOLD, 30));
             g2d.setColor(Color.WHITE);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 20));
-            g2d.drawString("Press ENTER to Continue", 280, 450);
+            String title = "PILOT IDENTIFICATION";
+            g2d.drawString(title, px + (panelWidth - g2d.getFontMetrics().stringWidth(title)) / 2, py + 50);
+
+            g2d.setFont(new Font("Monospaced", Font.BOLD, 20));
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.drawString("USERNAME:", px + 50, py + 120);
+            g2d.setColor(loginSelection == 0 ? new Color(0, 255, 255, 80) : new Color(50, 50, 50, 150));
+            g2d.fillRect(px + 180, py + 95, 250, 35);
+            g2d.setColor(loginSelection == 0 ? Color.CYAN : Color.GRAY);
+            g2d.drawRect(px + 180, py + 95, 250, 35);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString(usernameInput + (loginSelection == 0 && blink ? "_" : ""), px + 190, py + 120);
+
+            g2d.setColor(Color.LIGHT_GRAY);
+            g2d.drawString("PASSWORD:", px + 50, py + 180);
+            g2d.setColor(loginSelection == 1 ? new Color(0, 255, 255, 80) : new Color(50, 50, 50, 150));
+            g2d.fillRect(px + 180, py + 155, 250, 35);
+            g2d.setColor(loginSelection == 1 ? Color.CYAN : Color.GRAY);
+            g2d.drawRect(px + 180, py + 155, 250, 35);
+            g2d.setColor(Color.WHITE);
+            String hiddenPass = "*".repeat(passwordInput.length());
+            g2d.drawString(hiddenPass + (loginSelection == 1 && blink ? "_" : ""), px + 190, py + 180);
+
+            int btnY = py + 230;
+            g2d.setColor(loginSelection == 2 ? new Color(0, 255, 100, 150) : new Color(50, 100, 50, 150));
+            g2d.fillRoundRect(px + 50, btnY, 180, 45, 20, 20);
+            g2d.setColor(loginSelection == 2 ? Color.GREEN : Color.DARK_GRAY);
+            g2d.drawRoundRect(px + 50, btnY, 180, 45, 20, 20);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("LOGIN", px + 105, btnY + 30);
+
+            g2d.setColor(loginSelection == 3 ? new Color(100, 100, 255, 150) : new Color(50, 50, 100, 150));
+            g2d.fillRoundRect(px + 250, btnY, 200, 45, 20, 20);
+            g2d.setColor(loginSelection == 3 ? new Color(100, 150, 255) : Color.DARK_GRAY);
+            g2d.drawRoundRect(px + 250, btnY, 200, 45, 20, 20);
+            g2d.setColor(Color.WHITE);
+            g2d.drawString("REGISTER", px + 295, btnY + 30);
+
+            g2d.setFont(new Font("Arial", Font.BOLD, 16));
+            g2d.setColor(loginMessageColor);
+            g2d.drawString(loginMessage, px + (panelWidth - g2d.getFontMetrics().stringWidth(loginMessage)) / 2, py + 340);
 
         } else if (gameState == GameState.MENU) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(new Color(0, 0, 0, 80));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-            long time = System.currentTimeMillis();
             String title = "CHICKEN INVADERS";
             g2d.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 65));
             int titleWidth = g2d.getFontMetrics().stringWidth(title);
@@ -262,6 +320,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setClip(new Rectangle(titleX, titleY - 65, titleWidth, 35));
             g2d.drawString(title, titleX, titleY);
             g2d.setClip(oldClip);
+
+            if (currentUser != null) {
+                g2d.setFont(new Font("Arial", Font.BOLD, 16));
+                g2d.setColor(Color.CYAN);
+                g2d.drawString("Logged in as: " + currentUser, 20, 30);
+            }
+
             g2d.setFont(new Font("Arial", Font.BOLD, 35));
             int startY = 280;
             for (int i = 0; i < menuOptions.length; i++) {
@@ -320,10 +385,27 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.drawLine(px + 30, py + 145, px + panelWidth - 30, py + 145);
 
             g2d.setFont(new Font("Arial", Font.BOLD, 20));
-            g2d.setColor(new Color(255, 215, 0));
-            g2d.drawString("1ST", px + 40, py + 200); g2d.drawString("Mahdi", px + 140, py + 200); g2d.drawString("9,999", px + 280, py + 200); g2d.drawString("MAX", px + 410, py + 200); g2d.drawString("2026-07-10", px + 520, py + 200);
+            String[] ranks = {"1ST", "2ND", "3RD", "4TH", "5TH"};
+            Color[] colors = {new Color(255, 215, 0), new Color(192, 192, 192), new Color(205, 127, 50), Color.WHITE, Color.GRAY};
 
-            if (System.currentTimeMillis() % 1000 < 500) {
+            for (int i = 0; i < 5; i++) {
+                g2d.setColor(colors[i]);
+                g2d.drawString(ranks[i], px + 40, py + 190 + (i * 45));
+                if (i < topScores.size()) {
+                    DatabaseManager.ScoreRecord sr = topScores.get(i);
+                    g2d.drawString(sr.username, px + 140, py + 190 + (i * 45));
+                    g2d.drawString(String.valueOf(sr.score), px + 280, py + 190 + (i * 45));
+                    g2d.drawString(String.valueOf(sr.level), px + 410, py + 190 + (i * 45));
+                    g2d.drawString(sr.date, px + 520, py + 190 + (i * 45));
+                } else {
+                    g2d.drawString("---", px + 140, py + 190 + (i * 45));
+                    g2d.drawString("---", px + 280, py + 190 + (i * 45));
+                    g2d.drawString("---", px + 410, py + 190 + (i * 45));
+                    g2d.drawString("---", px + 520, py + 190 + (i * 45));
+                }
+            }
+
+            if (blink) {
                 g2d.setColor(Color.YELLOW); g2d.setFont(new Font("Arial", Font.BOLD, 20));
                 String escText = "[ Press ESC to return to Menu ]";
                 g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 30);
@@ -347,7 +429,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setColor(Color.MAGENTA);
             g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 60);
 
-            boolean[] toggles = {true, true, true, true};
+            boolean[] toggles = {userSettings.musicOn, userSettings.shootSfx, userSettings.hitSfx, userSettings.gameoverSfx};
             String[] labels = {"🎵  BACKGROUND MUSIC", "🔫  SHOOT SFX", "💥  HIT SFX", "☠️  GAME OVER SFX"};
             String[] keys = {"M", "S", "H", "G"};
 
@@ -367,7 +449,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 g2d.fillOval(toggles[i] ? swX + 37 : swX + 3, rowY + 3, 29, 29);
             }
 
-            if (System.currentTimeMillis() % 1000 < 500) {
+            if (blink) {
                 g2d.setColor(Color.YELLOW);
                 g2d.setFont(new Font("Arial", Font.BOLD, 20));
                 String escText = "[ Press ESC to return to Menu ]";
@@ -395,7 +477,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setColor(Color.WHITE);
             String[] instructions = {"🚀   MOVE: W / A / S / D  or  Arrows", "🔫   SHOOT: Spacebar", "⏸️   PAUSE / RESUME: P", "🎯   OBJECTIVE: Survive & Destroy!"};
             for (int i = 0; i < instructions.length; i++) g2d.drawString(instructions[i], px + 60, py + 160 + (i * 60));
-            if (System.currentTimeMillis() % 1000 < 500) {
+            if (blink) {
                 g2d.setColor(Color.YELLOW); g2d.setFont(new Font("Arial", Font.BOLD, 20));
                 String escText = "[ Press ESC to return to Menu ]";
                 g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 40);
@@ -466,6 +548,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 gameState = GameState.GAMEOVER;
                 ScoreManager.coins += score;
                 ScoreManager.save();
+                DatabaseManager.saveScore(currentUser, score, currentLevel);
                 SoundManager.playSound("mixkit-retro-arcade-game-over-470.wav");
             }
         }
@@ -638,6 +721,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (bossDefeatTimer == 0) {
                 if (currentLevel == 8) {
                     gameState = GameState.WIN;
+                    DatabaseManager.saveScore(currentUser, score, currentLevel);
                     SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Ending Theme.wav");
                 } else { currentLevel++; initLevel5(); }
             }
@@ -656,8 +740,47 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
+
         if (gameState == GameState.LOGIN) {
-            if (key == KeyEvent.VK_ENTER) gameState = GameState.MENU;
+            if (key == KeyEvent.VK_DOWN || key == KeyEvent.VK_TAB) {
+                loginSelection = (loginSelection + 1) % 4;
+            } else if (key == KeyEvent.VK_UP) {
+                loginSelection = (loginSelection - 1 + 4) % 4;
+            } else if (key == KeyEvent.VK_BACK_SPACE) {
+                if (loginSelection == 0 && usernameInput.length() > 0) {
+                    usernameInput = usernameInput.substring(0, usernameInput.length() - 1);
+                } else if (loginSelection == 1 && passwordInput.length() > 0) {
+                    passwordInput = passwordInput.substring(0, passwordInput.length() - 1);
+                }
+            } else if (key == KeyEvent.VK_ENTER) {
+                if (loginSelection == 0) loginSelection = 1;
+                else if (loginSelection == 1) loginSelection = 2;
+                else if (loginSelection == 2) {
+                    if (usernameInput.isEmpty() || passwordInput.isEmpty()) {
+                        loginMessageColor = Color.RED;
+                        loginMessage = "ERROR: EMPTY FIELDS!";
+                    } else if (DatabaseManager.login(usernameInput, passwordInput)) {
+                        currentUser = usernameInput;
+                        userSettings = DatabaseManager.getUserSettings(currentUser);
+                        gameState = GameState.MENU;
+                    } else {
+                        loginMessageColor = Color.RED;
+                        loginMessage = "ERROR: INCORRECT USERNAME OR PASSWORD!";
+                    }
+                } else if (loginSelection == 3) {
+                    if (usernameInput.isEmpty() || passwordInput.isEmpty()) {
+                        loginMessageColor = Color.RED;
+                        loginMessage = "ERROR: EMPTY FIELDS!";
+                    } else if (DatabaseManager.register(usernameInput, passwordInput)) {
+                        loginMessageColor = Color.GREEN;
+                        loginMessage = "SUCCESS: REGISTERED! YOU MAY NOW LOGIN.";
+                        loginSelection = 2;
+                    } else {
+                        loginMessageColor = Color.RED;
+                        loginMessage = "ERROR: USERNAME ALREADY EXISTS!";
+                    }
+                }
+            }
         } else if (gameState == GameState.MENU) {
             if (key == KeyEvent.VK_UP) {
                 currentMenuSelection--;
@@ -667,7 +790,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (currentMenuSelection > menuOptions.length - 1) currentMenuSelection = 0;
             } else if (key == KeyEvent.VK_ENTER) {
                 if (currentMenuSelection == 0) startGame();
-                else if (currentMenuSelection == 1) gameState = GameState.HIGH_SCORES;
+                else if (currentMenuSelection == 1) {
+                    topScores = DatabaseManager.getTopScores(5);
+                    gameState = GameState.HIGH_SCORES;
+                }
                 else if (currentMenuSelection == 2) { previousState = GameState.MENU; gameState = GameState.SETTINGS; }
                 else if (currentMenuSelection == 3) gameState = GameState.HOW_TO_PLAY;
                 else if (currentMenuSelection == 4) System.exit(0);
@@ -687,8 +813,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (key == KeyEvent.VK_M) { previousState = GameState.PAUSED; gameState = GameState.SETTINGS; }
         } else if (gameState == GameState.SETTINGS) {
             if (key == KeyEvent.VK_ESCAPE) gameState = previousState;
-            if (key == KeyEvent.VK_M) SoundManager.toggleMusic();
-            if (key == KeyEvent.VK_O) SoundManager.toggleSFX();
+            if (key == KeyEvent.VK_M) userSettings.musicOn = !userSettings.musicOn;
+            if (key == KeyEvent.VK_S) userSettings.shootSfx = !userSettings.shootSfx;
+            if (key == KeyEvent.VK_H) userSettings.hitSfx = !userSettings.hitSfx;
+            if (key == KeyEvent.VK_G) userSettings.gameoverSfx = !userSettings.gameoverSfx;
+
+            if (currentUser != null) {
+                DatabaseManager.updateSettings(currentUser, userSettings);
+            }
+
         } else if (gameState == GameState.HIGH_SCORES || gameState == GameState.HOW_TO_PLAY || gameState == GameState.GAMEOVER || gameState == GameState.WIN) {
             if (key == KeyEvent.VK_ESCAPE) gameState = GameState.MENU;
         }
@@ -707,5 +840,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+        if (gameState == GameState.LOGIN) {
+            char c = e.getKeyChar();
+            if (Character.isLetterOrDigit(c)) {
+                if (loginSelection == 0 && usernameInput.length() < 12) {
+                    usernameInput += c;
+                } else if (loginSelection == 1 && passwordInput.length() < 12) {
+                    passwordInput += c;
+                }
+            }
+        }
+    }
 }
