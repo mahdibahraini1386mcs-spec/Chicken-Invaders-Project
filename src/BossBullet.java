@@ -1,39 +1,40 @@
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Rectangle;
 
 public class BossBullet {
-    private int x, y;
-    private int speedX, speedY;
-    private int width = 25;
-    private int height = 30;
-    private Image image;
+    private int x, y, dx, dy;
+    private int width = 20, height = 20;
+    private Image img;
 
-    public BossBullet(int x, int y, int speedX, int speedY, Image image) {
+    public BossBullet(int x, int y, int dx, int dy, Image img) {
         this.x = x;
         this.y = y;
-        this.speedX = speedX;
-        this.speedY = speedY;
-        this.image = image;
+        this.dx = dx;
+        this.dy = dy;
+        this.img = img;
     }
 
     public void move() {
-        x += speedX;
-        y += speedY;
+        x += dx;
+        y += dy;
     }
 
-    public void draw(Graphics2D g2d) {
-        if (image != null) {
-            g2d.drawImage(image, x, y, width, height, null);
-        } else {
-            g2d.setColor(java.awt.Color.YELLOW);
-            g2d.fillOval(x, y, width, height);
-        }
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
     }
 
     public Rectangle getBounds() {
         return new Rectangle(x, y, width, height);
     }
 
-    public int getY() { return y; }
+    public void draw(Graphics g) {
+        if (img != null) {
+            g.drawImage(img, x, y, width, height, null);
+        }
+    }
 }

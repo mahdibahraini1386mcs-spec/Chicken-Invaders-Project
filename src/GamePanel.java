@@ -66,7 +66,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         setPreferredSize(new Dimension(800, 600));
         addKeyListener(this);
 
-        DatabaseManager.initDB();
+        DatabaseManager.initializeDatabase();
 
         explosions = new ArrayList<>();
         bossExplosions = new ArrayList<>();
@@ -98,7 +98,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         currentLevel = 1;
         bossDefeatTimer = 0;
         freezeEndTime = 0;
-        plane = new Plane(375, 500, planeImage, ScoreManager.selectedPlane);
+        plane = new Plane(375, 500, planeImage, String.valueOf(ScoreManager.selectedPlane));
         enemies = new ArrayList<>();
         bullets = new ArrayList<>();
         eggs = new ArrayList<>();

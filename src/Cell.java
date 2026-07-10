@@ -1,9 +1,5 @@
 public class Cell {
-    private int row;
-    private int col;
-    private int x;
-    private int y;
-    private int counter;
+    private int row, col, x, y, counter;
     private String enemyType;
 
     public Cell(int row, int col, int x, int y, int counter, String enemyType) {
@@ -15,25 +11,14 @@ public class Cell {
         this.enemyType = enemyType;
     }
 
-    public void decreaseCounter() {
-        if (counter > 0) {
-            counter--;
-        }
-    }
+    public int getX() { return x; }
+    public void setX(int x) { this.x = x; } // این را اضافه کنید
 
-    public int getCounter() {
-        return counter;
-    }
+    public int getY() { return y; }
+    public void setY(int y) { this.y = y; } // این را اضافه کنید
 
-    public int getX() {
-        return x;
-    }
+    public int getCounter() { return counter; }
+    public void decreaseCounter() { this.counter--; }
 
-    public int getY() {
-        return y;
-    }
-
-    public String getEnemyType() {
-        return enemyType;
-    }
+    public String getEnemyType() { return enemyType; }
 }

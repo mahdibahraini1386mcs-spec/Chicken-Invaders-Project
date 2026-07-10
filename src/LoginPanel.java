@@ -47,7 +47,7 @@ public class LoginPanel extends JPanel {
                 if (user.isEmpty() || pass.isEmpty()) {
                     JOptionPane.showMessageDialog(LoginPanel.this, "Please fill in all fields!", "Error", JOptionPane.ERROR_MESSAGE);
                 } else {
-                    if (DatabaseManager.registerUser(user, pass)) {
+                    if (DatabaseManager.register(user, pass)) {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Registration Successful! You can now login.", "Success", JOptionPane.INFORMATION_MESSAGE);
                         userField.setText("");
                         passField.setText("");
@@ -67,11 +67,10 @@ public class LoginPanel extends JPanel {
                 if (user.isEmpty() || pass.isEmpty()) {
                     JOptionPane.showMessageDialog(LoginPanel.this, "Please fill in all fields!", "Error", JOptionPane.ERROR_MESSAGE);
                 } else {
-                    if (DatabaseManager.loginUser(user, pass)) {
+                    if (DatabaseManager.login(user, pass)) {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Login Successful! Welcome " + user, "Success", JOptionPane.INFORMATION_MESSAGE);
                         CardLayout cl = (CardLayout) getParent().getLayout();
                         cl.show(getParent(), "MainMenuScreen");
-
                     } else {
                         JOptionPane.showMessageDialog(LoginPanel.this, "Invalid Username or Password!", "Error", JOptionPane.ERROR_MESSAGE);
                     }
