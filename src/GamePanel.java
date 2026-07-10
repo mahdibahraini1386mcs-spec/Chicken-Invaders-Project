@@ -295,7 +295,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(new Color(0, 0, 0, 180));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-            int panelWidth = 600, panelHeight = 450;
+            int panelWidth = 700, panelHeight = 450;
             int px = (getWidth() - panelWidth) / 2, py = (getHeight() - panelHeight) / 2;
             g2d.setColor(new Color(30, 20, 10, 220));
             g2d.fillRoundRect(px, py, panelWidth, panelHeight, 40, 40);
@@ -308,21 +308,21 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2 + 3, py + 63);
             g2d.setColor(new Color(255, 215, 0));
             g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 60);
-            g2d.setFont(new Font("Arial", Font.BOLD, 20));
+
+            g2d.setFont(new Font("Arial", Font.BOLD, 18));
             g2d.setColor(new Color(200, 200, 200));
-            g2d.drawString("RANK", px + 50, py + 130);
-            g2d.drawString("PILOT", px + 180, py + 130);
-            g2d.drawString("SCORE", px + 350, py + 130);
-            g2d.drawString("LEVEL", px + 480, py + 130);
+            g2d.drawString("RANK", px + 40, py + 130);
+            g2d.drawString("PILOT", px + 140, py + 130);
+            g2d.drawString("SCORE", px + 280, py + 130);
+            g2d.drawString("LEVEL", px + 410, py + 130);
+            g2d.drawString("DATE", px + 520, py + 130);
             g2d.setColor(new Color(255, 215, 0, 100));
-            g2d.drawLine(px + 40, py + 145, px + panelWidth - 40, py + 145);
-            g2d.setFont(new Font("Arial", Font.BOLD, 24));
+            g2d.drawLine(px + 30, py + 145, px + panelWidth - 30, py + 145);
+
+            g2d.setFont(new Font("Arial", Font.BOLD, 20));
             g2d.setColor(new Color(255, 215, 0));
-            g2d.drawString("1ST", px + 50, py + 200); g2d.drawString("Mahdi", px + 180, py + 200); g2d.drawString("9,999", px + 350, py + 200); g2d.drawString("MAX", px + 490, py + 200);
-            g2d.setColor(new Color(192, 192, 192));
-            g2d.drawString("2ND", px + 50, py + 260); g2d.drawString("Player_2", px + 180, py + 260); g2d.drawString("5,430", px + 350, py + 260); g2d.drawString("Lvl 5", px + 490, py + 260);
-            g2d.setColor(new Color(205, 127, 50));
-            g2d.drawString("3RD", px + 50, py + 320); g2d.drawString("Guest", px + 180, py + 320); g2d.drawString("2,100", px + 350, py + 320); g2d.drawString("Lvl 3", px + 490, py + 320);
+            g2d.drawString("1ST", px + 40, py + 200); g2d.drawString("Mahdi", px + 140, py + 200); g2d.drawString("9,999", px + 280, py + 200); g2d.drawString("MAX", px + 410, py + 200); g2d.drawString("2026-07-10", px + 520, py + 200);
+
             if (System.currentTimeMillis() % 1000 < 500) {
                 g2d.setColor(Color.YELLOW); g2d.setFont(new Font("Arial", Font.BOLD, 20));
                 String escText = "[ Press ESC to return to Menu ]";
@@ -333,7 +333,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(new Color(0, 0, 0, 170));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-            int panelWidth = 600, panelHeight = 400;
+            int panelWidth = 600, panelHeight = 500;
             int px = (getWidth() - panelWidth) / 2, py = (getHeight() - panelHeight) / 2;
             g2d.setColor(new Color(20, 10, 40, 220));
             g2d.fillRoundRect(px, py, panelWidth, panelHeight, 50, 50);
@@ -343,40 +343,35 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setFont(new Font("Arial", Font.BOLD, 40));
             String title = "SYSTEM SETTINGS";
             g2d.setColor(Color.BLACK);
-            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2 + 3, py + 73);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2 + 3, py + 63);
             g2d.setColor(Color.MAGENTA);
-            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 70);
-            boolean musicOn = SoundManager.getMusicStatus();
-            boolean sfxOn = SoundManager.getSFXStatus();
-            int row1Y = py + 150;
-            g2d.setFont(new Font("Arial", Font.BOLD, 26));
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("🎵  BACKGROUND MUSIC", px + 60, row1Y + 25);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 16));
-            g2d.setColor(Color.LIGHT_GRAY);
-            g2d.drawString("Press 'M' on keyboard to toggle", px + 60, row1Y + 50);
-            int sw1X = px + panelWidth - 140;
-            g2d.setColor(musicOn ? new Color(0, 255, 150) : new Color(80, 80, 80));
-            g2d.fillRoundRect(sw1X, row1Y - 5, 80, 40, 40, 40);
-            g2d.setColor(Color.WHITE);
-            g2d.fillOval(musicOn ? sw1X + 42 : sw1X + 4, row1Y - 1, 32, 32);
-            int row2Y = py + 260;
-            g2d.setFont(new Font("Arial", Font.BOLD, 26));
-            g2d.setColor(Color.WHITE);
-            g2d.drawString("🔊  SOUND EFFECTS", px + 60, row2Y + 25);
-            g2d.setFont(new Font("Arial", Font.PLAIN, 16));
-            g2d.setColor(Color.LIGHT_GRAY);
-            g2d.drawString("Press 'O' on keyboard to toggle", px + 60, row2Y + 50);
-            int sw2X = px + panelWidth - 140;
-            g2d.setColor(sfxOn ? new Color(0, 255, 150) : new Color(80, 80, 80));
-            g2d.fillRoundRect(sw2X, row2Y - 5, 80, 40, 40, 40);
-            g2d.setColor(Color.WHITE);
-            g2d.fillOval(sfxOn ? sw2X + 42 : sw2X + 4, row2Y - 1, 32, 32);
+            g2d.drawString(title, (getWidth() - g2d.getFontMetrics().stringWidth(title)) / 2, py + 60);
+
+            boolean[] toggles = {true, true, true, true};
+            String[] labels = {"🎵  BACKGROUND MUSIC", "🔫  SHOOT SFX", "💥  HIT SFX", "☠️  GAME OVER SFX"};
+            String[] keys = {"M", "S", "H", "G"};
+
+            for (int i = 0; i < 4; i++) {
+                int rowY = py + 130 + (i * 80);
+                g2d.setFont(new Font("Arial", Font.BOLD, 22));
+                g2d.setColor(Color.WHITE);
+                g2d.drawString(labels[i], px + 40, rowY + 20);
+                g2d.setFont(new Font("Arial", Font.PLAIN, 14));
+                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.drawString("Press '" + keys[i] + "' to toggle", px + 40, rowY + 40);
+
+                int swX = px + panelWidth - 120;
+                g2d.setColor(toggles[i] ? new Color(0, 255, 150) : new Color(80, 80, 80));
+                g2d.fillRoundRect(swX, rowY, 70, 35, 35, 35);
+                g2d.setColor(Color.WHITE);
+                g2d.fillOval(toggles[i] ? swX + 37 : swX + 3, rowY + 3, 29, 29);
+            }
+
             if (System.currentTimeMillis() % 1000 < 500) {
                 g2d.setColor(Color.YELLOW);
                 g2d.setFont(new Font("Arial", Font.BOLD, 20));
                 String escText = "[ Press ESC to return to Menu ]";
-                g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 30);
+                g2d.drawString(escText, (getWidth() - g2d.getFontMetrics().stringWidth(escText)) / 2, py + panelHeight - 20);
             }
 
         } else if (gameState == GameState.HOW_TO_PLAY) {

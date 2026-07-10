@@ -1,47 +1,44 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseManager {
     private static final String URL = "jdbc:sqlite:game.db";
 
-    public static void initializeDatabase() {
+
+    public static void initDB() {
         try (Connection conn = DriverManager.getConnection(URL);
              Statement stmt = conn.createStatement()) {
+
 
             String createUsersTable = "CREATE TABLE IF NOT EXISTS users (" +
                     "username TEXT PRIMARY KEY," +
                     "password TEXT NOT NULL," +
                     "high_score INTEGER DEFAULT 0," +
                     "last_level INTEGER DEFAULT 1," +
-                    "sound_music BOOLEAN DEFAULT 1," +
-                    "sound_shot BOOLEAN DEFAULT 1," +
-                    "sound_crash BOOLEAN DEFAULT 1," +
-                    "sound_gameover BOOLEAN DEFAULT 1" +
-                    ");";
+                    "music_on BOOLEAN DEFAULT 1," +
+                    "shoot_sfx BOOLEAN DEFAULT 1," +
+                    "hit_sfx BOOLEAN DEFAULT 1," +
+                    "gameover_sfx BOOLEAN DEFAULT 1" +
+                    ")";
             stmt.execute(createUsersTable);
 
-            String createHistoryTable = "CREATE TABLE IF NOT EXISTS game_history (" +
+
+            String createScoresTable = "CREATE TABLE IF NOT EXISTS scores (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "username TEXT," +
                     "score INTEGER," +
                     "level INTEGER," +
-                    "play_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP," +
+                    "play_date DATE DEFAULT (date('now','localtime'))," +
                     "FOREIGN KEY(username) REFERENCES users(username)" +
-                    ");";
-            stmt.execute(createHistoryTable);
-
-            System.out.println("Database tables checked/created successfully.");
-
+                    ")";
+            stmt.execute(createScoresTable);
         } catch (SQLException e) {
-            System.out.println("Database connection error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    public static boolean registerUser(String username, String password) {
+    public static boolean register(String username, String password) {
         String sql = "INSERT INTO users(username, password) VALUES(?, ?)";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -53,16 +50,20 @@ public class DatabaseManager {
             return false;
         }
     }
-    public static boolean loginUser(String username, String password) {
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+
+
+    public static boolean login(String username, String password) {
+        String sql = "SELECT password FROM users WHERE username = ?";
         try (Connection conn = DriverManager.getConnection(URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, username);
-            pstmt.setString(2, password);
             ResultSet rs = pstmt.executeQuery();
-            return rs.next();
+            if (rs.next()) {
+                return rs.getString("password").equals(password);
+            }
         } catch (SQLException e) {
-            return false;
+            e.printStackTrace();
         }
+        return false;
     }
 }
