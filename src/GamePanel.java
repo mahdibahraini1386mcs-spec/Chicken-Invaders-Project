@@ -50,7 +50,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private long lastEggTime = 0;
     private int eggInterval = 3000;
     private int bossDefeatTimer = 0;
-    private long freezeEndTime = 0; // تایمر بمب یخ‌زن
+    private long freezeEndTime = 0;
     private Random random = new Random();
 
     private int currentLevel = 1;
@@ -74,7 +74,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         ScoreManager.load();
         timer = new Timer(16, this);
         timer.start();
-        SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Main Theme.wav");
+        SoundManager.playMusic(SoundManager.MAIN_THEME);
     }
 
     private void loadImages() {
@@ -192,7 +192,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         boolean blink = (time % 1000) < 500;
 
         if (gameState == GameState.LOGIN) {
-            // (بخش لاگین حذف نشده، خلاصه شده تا حجم پیام کمتر شود - همان کد قبلی خودت است)
             if (loginBgImage != null) g2d.drawImage(loginBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(new Color(0, 0, 0, 180));
             g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -220,7 +219,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             g2d.setFont(new Font("Arial", Font.BOLD, 16)); g2d.setColor(loginMessageColor);
             g2d.drawString(loginMessage, px + (panelWidth - g2d.getFontMetrics().stringWidth(loginMessage)) / 2, py + 340);
         } else if (gameState == GameState.MENU) {
-            // (همان منوی قبلی)
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
             g2d.setColor(new Color(0, 0, 0, 80)); g2d.fillRect(0, 0, getWidth(), getHeight());
             String title = "CHICKEN INVADERS";
@@ -313,7 +311,10 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (plane.getLives() <= 0) {
                 gameState = GameState.GAMEOVER;
                 DatabaseManager.saveScore(currentUser, score, currentLevel, userSettings);
-                if (userSettings.gameoverSfx) SoundManager.playSound("mixkit-retro-arcade-game-over-470.wav");
+                if (userSettings.gameoverSfx) {
+                    SoundManager.stopMusic();
+                    SoundManager.playSound(SoundManager.GAME_OVER);
+                }
             }
         }
         repaint();
@@ -326,7 +327,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (downPressed) plane.moveDown(getHeight());
         if (spacePressed && plane.canShoot()) {
             plane.shoot(bullets);
-            if (userSettings.shootSfx) SoundManager.playSound("mixkit-short-laser-gun-shot-1670.wav");
+            if (userSettings.shootSfx) SoundManager.playSound(SoundManager.LASER);
         }
     }
 
@@ -366,7 +367,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     private void updateEnemies() {
         if (enemies.isEmpty()) return;
-        if (System.currentTimeMillis() < freezeEndTime) return; // بمب یخ‌زن کار می‌کند!
+        if (System.currentTimeMillis() < freezeEndTime) return;
 
         boolean hitEdge = false;
         for (int r = 0; r < 5; r++) {
@@ -389,11 +390,22 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
+        for (int r = 0; r < 5; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (grid[r][c] != null && grid[r][c].getY() > getHeight() + 50) {
+                    grid[r][c].setY(-50);
+                }
+            }
+        }
+
         for (Enemy enemy : enemies) {
             Cell cell = enemyCellMap.get(enemy);
             if (cell != null) {
                 if (enemy.isSpawning()) enemy.moveToTarget(cell.getX(), cell.getY());
-                else { enemy.setX(cell.getX()); enemy.setY(cell.getY()); }
+                else {
+                    enemy.setX(cell.getX());
+                    enemy.setY(cell.getY());
+                }
             }
         }
 
@@ -401,11 +413,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (currentTime - lastEggTime > eggInterval && !enemies.isEmpty()) {
             Enemy randomEnemy = enemies.get(random.nextInt(enemies.size()));
             if (!randomEnemy.isSpawning()) {
-                eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, 0, 4, eggImage)); // سرعت 4 مطابق خواسته استاد
+                eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, 0, 4, eggImage));
                 if (randomEnemy.getClass().getSimpleName().equals("ShooterEnemy")) {
                     int dx = plane.getX() - randomEnemy.getX(), dy = plane.getY() - randomEnemy.getY();
                     double dist = Math.sqrt(dx*dx + dy*dy);
-                    if(dist > 0) eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, (int)((dx/dist)*5), (int)((dy/dist)*5), eggImage)); // افقی با سرعت 5
+                    if(dist > 0) eggs.add(new Egg(randomEnemy.getX() + 20, randomEnemy.getY() + 40, (int)((dx/dist)*5), (int)((dy/dist)*5), eggImage));
                 }
             }
             lastEggTime = currentTime;
@@ -413,7 +425,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void updateEggs() {
-        if (System.currentTimeMillis() < freezeEndTime) return; // توقف تخم‌ها با بمب یخ
+        if (System.currentTimeMillis() < freezeEndTime) return;
         Iterator<Egg> iter = eggs.iterator();
         while (iter.hasNext()) {
             Egg egg = iter.next(); egg.move();
@@ -432,7 +444,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             } else if (currentLevel == 8) {
                 for (int i = 0; i < 8; i++) {
                     double angle = Math.toRadians(i * 45);
-                    bossBullets.add(new BossBullet(bx, by, (int)(Math.cos(angle)*5), (int)(Math.sin(angle)*5), eggImage)); // غول 8 با سرعت 5
+                    bossBullets.add(new BossBullet(bx, by, (int)(Math.cos(angle)*5), (int)(Math.sin(angle)*5), eggImage));
                 }
             }
         }
@@ -469,18 +481,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         enemyCellMap.remove(e);
                         bulletIter.remove();
 
-                        // تخصیص عادلانه امتیازات
                         int pts = 10;
                         if (e instanceof FastEnemy) pts = 15;
                         else if (e instanceof ZigzagEnemy) pts = 20;
                         else if (e instanceof ShooterEnemy) pts = 25;
                         score += pts;
 
-                        // افکت انفجار مرغ معمولی
                         explosions.add(new Explosion(e.getX(), e.getY(), explosion1Image));
-                        if (userSettings.hitSfx) SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
+                        if (userSettings.hitSfx) SoundManager.playSound(SoundManager.EXPLOSION);
 
-                        // احتمال 20% سقوط پاورآپ تصادفی
                         if (random.nextDouble() < 0.20) {
                             String[] types = {"AddFire", "RapidFire", "ExtraLife", "Shield", "FreezeBomb"};
                             powerUps.add(new PowerUp(e.getX(), e.getY(), types[random.nextInt(types.length)]));
@@ -499,19 +508,33 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         enemies.addAll(newSpawns);
 
-        // برخورد تخم‌ها با هواپیما
+        Iterator<Enemy> kamikazeIter = enemies.iterator();
+        while (kamikazeIter.hasNext()) {
+            Enemy e = kamikazeIter.next();
+            if (plane.getBounds().intersects(e.getBounds())) {
+                plane.takeDamage();
+                explosions.add(new Explosion(plane.getX(), plane.getY(), explosion1Image));
+                explosions.add(new Explosion(e.getX(), e.getY(), explosion1Image));
+                if (userSettings.hitSfx) SoundManager.playSound(SoundManager.EXPLOSION);
+
+                Cell cell = enemyCellMap.get(e);
+                if(cell != null) cell.decreaseCounter();
+                kamikazeIter.remove();
+                enemyCellMap.remove(e);
+            }
+        }
+
         Iterator<Egg> eggIter = eggs.iterator();
         while (eggIter.hasNext()) {
             Egg egg = eggIter.next();
             if (plane.getBounds().intersects(egg.getBounds())) {
                 plane.takeDamage();
-                explosions.add(new Explosion(plane.getX(), plane.getY(), explosion1Image)); // انفجار برخورد با پلیر
+                explosions.add(new Explosion(plane.getX(), plane.getY(), explosion1Image));
                 eggIter.remove();
-                if (userSettings.hitSfx) SoundManager.playSound("mixkit-player-losing-life-2157.wav");
+                if (userSettings.hitSfx) SoundManager.playSound(SoundManager.EXPLOSION);
             }
         }
 
-        // برخورد تیرهای باس
         Iterator<BossBullet> bbIter = bossBullets.iterator();
         while (bbIter.hasNext()) {
             BossBullet bb = bbIter.next();
@@ -519,7 +542,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 plane.takeDamage();
                 explosions.add(new Explosion(plane.getX(), plane.getY(), explosion1Image));
                 bbIter.remove();
-                if (userSettings.hitSfx) SoundManager.playSound("mixkit-player-losing-life-2157.wav");
+                if (userSettings.hitSfx) SoundManager.playSound(SoundManager.EXPLOSION);
             }
         }
     }
@@ -527,8 +550,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void checkLevelUp() {
         if (boss != null && boss.getHealth() <= 0) {
             bossExplosions.add(new BossExplosion(boss.getX(), boss.getY(), boss.getWidth(), boss.getHeight(), explosion1Image, explosion2Image));
-            if (userSettings.hitSfx) SoundManager.playSound("mixkit-epic-impact-afar-explosion-2782.wav");
-            score += (currentLevel == 4) ? 500 : 1000; // امتیاز غول آخر 1000
+            if (userSettings.hitSfx) SoundManager.playSound(SoundManager.EXPLOSION);
+            score += (currentLevel == 4) ? 500 : 1000;
             boss = null;
             bossDefeatTimer = 100;
         }
@@ -538,11 +561,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (currentLevel == 8) {
                     gameState = GameState.WIN;
                     DatabaseManager.saveScore(currentUser, score, currentLevel, userSettings);
-                    SoundManager.playMusic("Chicken Invaders 2 Remastered OST - Ending Theme.wav");
-                } else { score += 200; currentLevel++; initLevel5(); } // 200 امتیاز جایزه کلیر شدن
+                    SoundManager.stopMusic();
+                    SoundManager.playMusic(SoundManager.ENDING_THEME);
+                } else { score += 200; currentLevel++; initLevel5(); }
             }
         } else if (enemies.isEmpty() && boss == null && gameState == GameState.PLAYING) {
-            score += 200; // جایزه کلیر شدن استیج‌های عادی
+            score += 200;
             currentLevel++;
             if (currentLevel == 2) initLevel2();
             else if (currentLevel == 3) initLevel3();
