@@ -56,9 +56,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int currentLevel = 1;
     private int score = 0;
 
+    // متغیرهای تصاویر
     private Image planeImage, normalEnemyImage, fastEnemyImage, zigzagEnemyImage, shooterEnemyImage, bossImage, boss2Image;
     private Image loginBgImage, menuBgImage, gameBgImage, eggImage;
     private Image explosion1Image, explosion2Image;
+    // اضافه شدن تصاویر پاورآپ‌ها
+    private Image addFireImg, rapidFireImg, extraLifeImg, shieldImg, freezeBombImg;
 
     public GamePanel() {
         setFocusable(true);
@@ -91,6 +94,13 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         eggImage = ResourceManager.loadImage("chicken", "egg.png");
         explosion1Image = ResourceManager.loadImage("airplan", "Explosion.png");
         explosion2Image = ResourceManager.loadImage("airplan", "Explosion2.png");
+
+        // لود کردن تصاویر پاورآپ‌ها بر اساس نام فایل‌های عکس شما
+        addFireImg = ResourceManager.loadImage("powerup1", "add_shot.png");
+        rapidFireImg = ResourceManager.loadImage("powerup1", "fast_shot.png");
+        extraLifeImg = ResourceManager.loadImage("powerup1", "heal.png");
+        shieldImg = ResourceManager.loadImage("powerup1", "sheild.png"); // دقیقاً مثل املای فایل
+        freezeBombImg = ResourceManager.loadImage("powerup1", "freeze.png");
     }
 
     private void startGame() {
@@ -490,9 +500,20 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         explosions.add(new Explosion(e.getX(), e.getY(), explosion1Image));
                         if (userSettings.hitSfx) SoundManager.playSound(SoundManager.EXPLOSION);
 
+                        // اضافه شدن منطق تصویر برای پاورآپ‌ها
                         if (random.nextDouble() < 0.20) {
                             String[] types = {"AddFire", "RapidFire", "ExtraLife", "Shield", "FreezeBomb"};
-                            powerUps.add(new PowerUp(e.getX(), e.getY(), types[random.nextInt(types.length)]));
+                            String selectedType = types[random.nextInt(types.length)];
+                            Image powerUpImg = null;
+
+                            switch(selectedType) {
+                                case "AddFire": powerUpImg = addFireImg; break;
+                                case "RapidFire": powerUpImg = rapidFireImg; break;
+                                case "ExtraLife": powerUpImg = extraLifeImg; break;
+                                case "Shield": powerUpImg = shieldImg; break;
+                                case "FreezeBomb": powerUpImg = freezeBombImg; break;
+                            }
+                            powerUps.add(new PowerUp(e.getX(), e.getY(), selectedType, powerUpImg));
                         }
 
                         if (cell.getCounter() > 0) {

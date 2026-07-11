@@ -1,29 +1,39 @@
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
 
 public class PowerUp {
     private int x, y;
+    private int width = 30, height = 30; // اندازه پاورآپ (میتوانی تغییر دهی)
     private String type;
-    private int speed = 2; // خواسته استاد: ۲ پیکسل/فریم
+    private Image img;
 
-    public PowerUp(int x, int y, String type) {
-        this.x = x; this.y = y; this.type = type;
+    public PowerUp(int x, int y, String type, Image img) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.img = img;
     }
 
-    public void move() { y += speed; }
-    public String getType() { return type; }
-    public Rectangle getBounds() { return new Rectangle(x, y, 30, 30); }
-    public int getY() { return y; }
+    public void move() {
+        y += 3;
+    }
 
     public void draw(Graphics g) {
-        if (type.equals("AddFire")) g.setColor(Color.RED);
-        else if (type.equals("RapidFire")) g.setColor(Color.ORANGE);
-        else if (type.equals("ExtraLife")) g.setColor(Color.GREEN);
-        else if (type.equals("Shield")) g.setColor(Color.CYAN);
-        else if (type.equals("FreezeBomb")) g.setColor(Color.BLUE);
+        if (img != null) {
+            g.drawImage(img, x, y, width, height, null);
+        }
+    }
 
-        g.fillOval(x, y, 30, 30);
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 10));
-        g.drawString(type.substring(0, 3).toUpperCase(), x + 5, y + 20);
+    public Rectangle getBounds() {
+        return new Rectangle(x, y, width, height);
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public int getY() {
+        return y;
     }
 }
