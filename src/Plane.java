@@ -1,40 +1,57 @@
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 
 public class Plane {
     private int x, y;
     private int width = 50, height = 50;
-    private int speed = 5;
-    private int lives = 3;
-    private int maxLives = 5;
-    private long lastShotTime = 0;
-    private int fireRate = 300;
-
-    // پاورآپ‌ها
-    private boolean shieldActive = false;
-    private long shieldEndTime = 0;
-    private boolean rapidFireActive = false;
-    private long rapidFireEndTime = 0;
-    private int fireLevel = 1; // Add Fire (تعداد تیرها)
     private Image img;
 
-    public Plane(int x, int y, Image img, String type) { this.x = x; this.y = y; this.img = img; }
+    // ویژگی‌های داینامیک
+    private String type;
+    private int speed;
+    private int fireInterval; // بر حسب میلی‌ثانیه
+    private int maxLives;
+    private int lives;
+    private int damageMultiplier = 1;
 
-    public void updatePowerUps() {
-        long now = System.currentTimeMillis();
-        if (shieldActive && now > shieldEndTime) shieldActive = false;
-        if (rapidFireActive && now > rapidFireEndTime) rapidFireActive = false;
+    private int fireLevel = 1;
+    private long lastShotTime = 0;
+
+    // زمان‌سنج‌های پاورآپ
+    private long rapidFireEndTime = 0;
+    private long shieldEndTime = 0;
+
+    public Plane(int x, int y, Image img, String type) {
+        this.x = x;
+        this.y = y;
+        this.img = img;
+        this.type = type;
+
+        // اعمال تنظیمات بر اساس نوع هواپیما طبق داکیومنت پروژه
+        switch (type) {
+            case "Fast":
+                this.speed = 7; this.fireInterval = 250; this.maxLives = 3; this.damageMultiplier = 1; break;
+            case "Heavy":
+                this.speed = 4; this.fireInterval = 200; this.maxLives = 5; this.damageMultiplier = 1; break;
+            case "Sniper":
+                this.speed = 5; this.fireInterval = 150; this.maxLives = 3; this.damageMultiplier = 2; break; // دمیج دو برابر
+            default: // Default
+                this.speed = 5; this.fireInterval = 300; this.maxLives = 3; this.damageMultiplier = 1; break;
+        }
+        this.lives = this.maxLives;
     }
 
-    public void moveLeft() { if (x > 0) x -= speed; }
-    public void moveRight(int limit) { if (x < limit - width) x += speed; }
-    public void moveUp() { if (y > 0) y -= speed; }
-    public void moveDown(int limit) { if (y < limit - height) y += speed; }
+    public void moveLeft() { x -= speed; if (x < 0) x = 0; }
+    public void moveRight(int screenWidth) { x += speed; if (x > screenWidth - width) x = screenWidth - width; }
+    public void moveUp() { y -= speed; if (y < 0) y = 0; }
+    public void moveDown(int screenHeight) { y += speed; if (y > screenHeight - height) y = screenHeight - height; }
 
     public boolean canShoot() {
         long now = System.currentTimeMillis();
-        int currentFireRate = rapidFireActive ? 150 : fireRate; // ترکیب Rapid Fire
-        if (now - lastShotTime >= currentFireRate) {
+        int currentInterval = isRapidFireActive() ? (fireInterval / 2) : fireInterval;
+        if (now - lastShotTime > currentInterval) {
             lastShotTime = now;
             return true;
         }
@@ -42,51 +59,47 @@ public class Plane {
     }
 
     public void shoot(ArrayList<Bullet> bullets) {
-        if (fireLevel == 1) {
-            bullets.add(new Bullet(x + width/2 - 5, y));
-        } else if (fireLevel == 2) {
-            bullets.add(new Bullet(x + 10, y));
-            bullets.add(new Bullet(x + width - 15, y));
-        } else {
-            bullets.add(new Bullet(x, y));
-            bullets.add(new Bullet(x + width/2 - 5, y));
-            bullets.add(new Bullet(x + width - 10, y));
-        }
+        int bx = x + width / 2 - 5;
+        int by = y;
+        bullets.add(new Bullet(bx, by));
+        if (fireLevel >= 2) { bullets.add(new Bullet(bx - 15, by + 10)); bullets.add(new Bullet(bx + 15, by + 10)); }
+        if (fireLevel >= 3) { bullets.add(new Bullet(bx - 25, by + 20)); bullets.add(new Bullet(bx + 25, by + 20)); }
+        if (fireLevel >= 4) { bullets.add(new Bullet(bx - 35, by + 30)); bullets.add(new Bullet(bx + 35, by + 30)); }
     }
 
-    public void takeDamage() {
-        if (!shieldActive) lives--;
-        else shieldActive = false; // سپر با یک ضربه می‌شکند و از بین می‌رود
-    }
-
-    public void addFire() { if (fireLevel < 3) fireLevel++; }
+    public void takeDamage() { if (!isShieldActive()) lives--; }
     public void addLife() { if (lives < maxLives) lives++; }
-    public void activateShield() { shieldActive = true; shieldEndTime = System.currentTimeMillis() + 10000; }
-    public void activateRapidFire() { rapidFireActive = true; rapidFireEndTime = System.currentTimeMillis() + 8000; }
+    public void addFire() { if (fireLevel < 4) fireLevel++; }
+    public void activateRapidFire() { rapidFireEndTime = System.currentTimeMillis() + 8000; }
+    public void activateShield() { shieldEndTime = System.currentTimeMillis() + 10000; }
+
+    public void updatePowerUps() {}
 
     public int getX() { return x; }
     public int getY() { return y; }
     public int getWidth() { return width; }
     public int getHeight() { return height; }
     public int getLives() { return lives; }
-    public int getDamageMultiplier() { return 1; }
     public int getFireLevel() { return fireLevel; }
+    public int getDamageMultiplier() { return damageMultiplier; } // برای غول‌ها
+    public Rectangle getBounds() { return new Rectangle(x, y, width, height); }
+
+    public boolean isShieldActive() { return System.currentTimeMillis() < shieldEndTime; }
+    public boolean isRapidFireActive() { return System.currentTimeMillis() < rapidFireEndTime; }
 
     public String getActivePowerupsText() {
-        String text = "";
-        if (shieldActive) text += "SHIELD ";
-        if (rapidFireActive) text += "RAPID ";
-        return text;
+        String s = "";
+        if (isRapidFireActive()) s += "[RAPID] ";
+        if (isShieldActive()) s += "[SHIELD] ";
+        return s;
     }
-
-    public Rectangle getBounds() { return new Rectangle(x, y, width, height); }
 
     public void draw(Graphics g) {
         g.drawImage(img, x, y, width, height, null);
-        if (shieldActive) {
-            g.setColor(new Color(0, 255, 255, 100)); // هاله سپر
+        if (isShieldActive()) {
+            g.setColor(new java.awt.Color(0, 255, 255, 100));
             g.fillOval(x - 10, y - 10, width + 20, height + 20);
-            g.setColor(Color.CYAN);
+            g.setColor(java.awt.Color.CYAN);
             g.drawOval(x - 10, y - 10, width + 20, height + 20);
         }
     }

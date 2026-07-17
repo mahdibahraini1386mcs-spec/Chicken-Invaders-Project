@@ -4,7 +4,7 @@ import java.awt.Rectangle;
 
 public class PowerUp {
     private int x, y;
-    private int width = 30, height = 30; // اندازه پاورآپ (میتوانی تغییر دهی)
+    private int width = 30, height = 30;
     private String type;
     private Image img;
 
@@ -16,7 +16,7 @@ public class PowerUp {
     }
 
     public void move() {
-        y += 3;
+        y += 2; // اصلاح شد: طبق بخش ۴.۶ صورت پروژه سرعت سقوط باید ۲ پیکسل/فریم باشد (قبلاً ۳ بود)
     }
 
     public void draw(Graphics g) {

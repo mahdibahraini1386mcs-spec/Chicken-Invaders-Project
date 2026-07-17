@@ -7,6 +7,7 @@ public class Enemy {
     protected int width = 40, height = 40;
     protected Image img;
     protected boolean isSpawning = false;
+    protected int spawnSpeed = 2; // سرعت پایه هنگام جایگزینی/اسپان - FastEnemy این را دو برابر می‌کند
 
     public Enemy(int x, int y, Image img) {
         this.x = x;
@@ -33,10 +34,10 @@ public class Enemy {
     public void setSpawning(boolean b) { this.isSpawning = b; }
 
     public void moveToTarget(int tx, int ty) {
-        if (x < tx) x += 2;
-        if (x > tx) x -= 2;
-        if (y < ty) y += 2;
-        if (y > ty) y -= 2;
-        if (Math.abs(x - tx) < 5 && Math.abs(y - ty) < 5) isSpawning = false;
+        if (x < tx) x += spawnSpeed;
+        if (x > tx) x -= spawnSpeed;
+        if (y < ty) y += spawnSpeed;
+        if (y > ty) y -= spawnSpeed;
+        if (Math.abs(x - tx) < spawnSpeed + 3 && Math.abs(y - ty) < spawnSpeed + 3) isSpawning = false;
     }
 }
