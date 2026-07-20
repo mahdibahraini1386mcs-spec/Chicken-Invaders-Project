@@ -210,7 +210,17 @@ public class DatabaseManager {
         return plane;
     }
 
-    // ۳. لاجیک تجهیز کردن (باز کردن قفل سفینه)
+    // ۳. متد ترکیبی برای دریافت همزمان بالاترین امتیاز و سفینه فعال کاربر
+    public static Object[] getStoreInfo(String username) {
+        // استفاده از متدهایی که در قدم‌های قبلی نوشتیم
+        int maxScore = getUserMaxScore(username);
+        String currentPlane = getActivePlane(username);
+
+        // برگرداندن اطلاعات به شکل یک آرایه (آیتم 0: امتیاز، آیتم 1: اسم سفینه)
+        return new Object[]{maxScore, currentPlane};
+    }
+
+    // ۴. لاجیک تجهیز کردن (باز کردن قفل سفینه)
     public static boolean equipPlane(String username, String planeName, int cost) {
         int currentHighScore = getUserMaxScore(username); // خواندن امتیاز واقعی
 

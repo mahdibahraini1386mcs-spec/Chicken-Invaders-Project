@@ -88,6 +88,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
     private Rectangle btnNo = new Rectangle(410, 320, 140, 50);
     private int hoverButton = -1; // 0=Yes, 1=No
 
+    // ===== متغیرهای پیام خطای سایبرپانکی برای ورود به استور =====
+    private boolean showStoreLoginError = false;
+    private Rectangle btnOkError = new Rectangle(320, 350, 160, 50);
+    private boolean hoverOkError = false;
+
     // Game Over افکت‌ها
     private ArrayList<GameOverParticle> gameOverParticles = new ArrayList<>();
     private long gameOverStartTime = 0;
@@ -123,7 +128,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         timer.start();
         if (userSettings.musicOn) SoundManager.playMusic(SoundManager.MAIN_THEME);
 
-        // شنونده‌های موس برای منوی خروج
+        // شنونده‌های موس برای منوی خروج و ارور استور
         addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -133,7 +138,14 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         DatabaseManager.saveScore(currentUser, score, currentLevel, userSettings);
                         gameState = GameState.MENU;
                     } else if (btnNo.contains(e.getPoint())) {
-                        showExitConfirm = false; // برگشت به بازی
+                        showExitConfirm = false;
+                    }
+                }
+
+                // 🔴 این بخش جدید برای کلیک روی دکمه OK ارور استور اضافه شود:
+                if (showStoreLoginError && gameState == GameState.MENU) {
+                    if (btnOkError.contains(e.getPoint())) {
+                        showStoreLoginError = false; // بستن پنجره ارور
                     }
                 }
             }
@@ -146,6 +158,11 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     if (btnYes.contains(e.getPoint())) hoverButton = 0;
                     else if (btnNo.contains(e.getPoint())) hoverButton = 1;
                     else hoverButton = -1;
+                }
+
+                // 🔴 این بخش جدید برای افکت Hover دکمه OK اضافه شود:
+                if (showStoreLoginError && gameState == GameState.MENU) {
+                    hoverOkError = btnOkError.contains(e.getPoint());
                 }
             }
         });
@@ -422,6 +439,41 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     g2d.setColor(Color.WHITE);
                 } else { g2d.setColor(new Color(180, 180, 200)); }
                 g2d.drawString(displayText, textX, textY);
+            }
+
+            // رسم پیام خطای هولوگرامی قرمز برای استور
+            if (showStoreLoginError) {
+                // پس‌زمینه تاریک
+                g2d.setColor(new Color(0, 0, 0, 210));
+                g2d.fillRect(0, 0, getWidth(), getHeight());
+
+                // پنل هشدار سایبرپانکی
+                int pX = 200, pY = 200, pW = 400, pH = 230;
+                g2d.setColor(new Color(40, 10, 15, 240));
+                g2d.fillRoundRect(pX, pY, pW, pH, 30, 30);
+                g2d.setColor(new Color(255, 50, 50));
+                g2d.setStroke(new BasicStroke(3));
+                g2d.drawRoundRect(pX, pY, pW, pH, 30, 30);
+
+                // متن هشدار
+                g2d.setFont(new Font("Impact", Font.ITALIC, 45));
+                g2d.setColor(new Color(255, 70, 70));
+                g2d.drawString("ACCESS DENIED", pX + 65, pY + 65);
+
+                g2d.setFont(new Font("Consolas", Font.BOLD, 17));
+                g2d.setColor(Color.LIGHT_GRAY);
+                g2d.drawString("Pilot identification required!", pX + 50, pY + 110);
+                g2d.drawString("Please LOGIN before entering Store.", pX + 35, pY + 140);
+
+                // دکمه تایید (با افکت Hover موس)
+                g2d.setColor(hoverOkError ? new Color(255, 80, 80) : new Color(150, 40, 40));
+                g2d.fillRoundRect(btnOkError.x, btnOkError.y, btnOkError.width, btnOkError.height, 20, 20);
+                g2d.setColor(hoverOkError ? Color.WHITE : Color.GRAY);
+                g2d.drawRoundRect(btnOkError.x, btnOkError.y, btnOkError.width, btnOkError.height, 20, 20);
+
+                g2d.setFont(new Font("Arial", Font.BOLD, 20));
+                g2d.setColor(Color.WHITE);
+                g2d.drawString("OK, PILOT", btnOkError.x + 32, btnOkError.y + 33);
             }
         } else if (gameState == GameState.STORE) {
             if (menuBgImage != null) g2d.drawImage(menuBgImage, 0, 0, getWidth(), getHeight(), null);
@@ -1496,7 +1548,7 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
         repaint();
     }
 
-    // ===== keyPressed با امتیاز واقعی از دیتابیس =====
+    // ===== keyPressed با امتیاز واقعی از دیتابیس و قفل کیبورد در ارور استور =====
     @Override
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
@@ -1520,10 +1572,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     } else if (DatabaseManager.login(usernameInput, passwordInput)) {
                         currentUser = usernameInput;
                         userSettings = DatabaseManager.getUserSettings(currentUser);
-
-                        // ===== خط تقلب: به محض لاگین، ۱۵۰۰۰ امتیاز به کاربر داده می‌شود =====
-                        DatabaseManager.saveScore(currentUser, 15000, 1, userSettings);
-
                         startGame();
                         if (userSettings.musicOn) SoundManager.playMusic(SoundManager.MAIN_THEME);
                         else SoundManager.stopMusic();
@@ -1534,8 +1582,12 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     if (usernameInput.isEmpty() || passwordInput.isEmpty()) {
                         loginMessageColor = Color.RED; loginMessage = "ERROR: EMPTY FIELDS!";
                     } else if (DatabaseManager.register(usernameInput, passwordInput)) {
-                        loginMessageColor = Color.GREEN; loginMessage = "SUCCESS! NOW LOGIN.";
-                        loginSelection = 2;
+                        // 🚀 ثبت‌نام موفق = لاگین اتوماتیک و پرواز مستقیم به مرحله اول
+                        currentUser = usernameInput;
+                        userSettings = DatabaseManager.getUserSettings(currentUser);
+                        startGame();
+                        if (userSettings.musicOn) SoundManager.playMusic(SoundManager.MAIN_THEME);
+                        else SoundManager.stopMusic();
                     } else {
                         loginMessageColor = Color.RED; loginMessage = "ERROR: USER EXISTS!";
                     }
@@ -1543,6 +1595,15 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
         else if (gameState == GameState.MENU) {
+            // اگر خطای استور باز است، کاربر نتواند با کیبورد در منو جابجا شود
+            if (showStoreLoginError) {
+                if (key == KeyEvent.VK_ENTER || key == KeyEvent.VK_ESCAPE) {
+                    showStoreLoginError = false; // با کیبورد هم بتواند ببندد
+                }
+                return; // این دستور باعث قفل شدن بقیه کدهای این بخش می‌شود
+            }
+
+            // کدهای حرکت در منو (VK_UP, VK_DOWN)
             if (key == KeyEvent.VK_UP) { currentMenuSelection--; if (currentMenuSelection < 0) currentMenuSelection = menuOptions.length - 1; }
             else if (key == KeyEvent.VK_DOWN) { currentMenuSelection++; if (currentMenuSelection > menuOptions.length - 1) currentMenuSelection = 0; }
             else if (key == KeyEvent.VK_ENTER) {
@@ -1550,13 +1611,16 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                     gameState = GameState.LOGIN;
                     loginMessage = "SYSTEM READY - AWAITING CREDENTIALS";
                     loginMessageColor = Color.YELLOW;
-                    usernameInput = "";
-                    passwordInput = "";
-                    loginSelection = 0;
+                    usernameInput = ""; passwordInput = ""; loginSelection = 0;
                 }
-                else if (currentMenuSelection == 1) {
+                else if (currentMenuSelection == 1) { // گزینه Store
                     if (currentUser != null) {
-                        activePlane = DatabaseManager.getActivePlane(currentUser);
+                        // ورود مجاز به استور
+                        Object[] info = DatabaseManager.getStoreInfo(currentUser);
+                        if (info != null && info.length >= 2) {
+                            int playerHighScore = (int) info[0];
+                            activePlane = (String) info[1];
+                        }
                         storeSelection = 0;
                         for (int i = 0; i < planeNames.length; i++) {
                             if (planeNames[i].equals(activePlane)) {
@@ -1567,9 +1631,8 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                         storeMessage = "";
                         gameState = GameState.STORE;
                     } else {
-                        gameState = GameState.LOGIN;
-                        loginMessage = "PLEASE LOGIN FIRST!";
-                        loginMessageColor = Color.YELLOW;
+                        // 🔴 نمایش ارور خفن گرافیکی برای مهمان!
+                        showStoreLoginError = true;
                     }
                 }
                 else if (currentMenuSelection == 2) { topScores = DatabaseManager.getTopScores(5); gameState = GameState.HIGH_SCORES; }
@@ -1593,7 +1656,6 @@ public class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (storeSelection > planeNames.length - 1) storeSelection = 0;
                 storeMessage = "";
             }
-            // ===== منطق خرید با امتیاز واقعی =====
             else if (key == KeyEvent.VK_ENTER) {
                 String selectedName = planeNames[storeSelection];
                 int cost = planeCosts[storeSelection];
